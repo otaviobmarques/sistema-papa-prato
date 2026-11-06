@@ -1,0 +1,237 @@
+import { useMemo, useState } from 'react'
+import { ArrowLeft, Database, LayoutDashboard, ListChecks, MessageCircle, Plus, Rocket, Trash2, UtensilsCrossed } from 'lucide-react'
+import { Folha, fmt, useAlimentos } from '../components/ui'
+import { Mascot } from '../components/Mascot'
+import { MODELOS, RECEITAS } from '../data/cardapio'
+import { alergenosEstimados, ALERGENOS } from '../lib/alergias'
+import { buscar, NOME_FONTE, nutrientesDe, somar, type Fonte } from '../lib/alimentos'
+import { CONQUISTAS, desbloqueadas } from '../lib/conquistas'
+import { DICAS_PADRAO, atualizar, obterEstado, uid, useEstado, type AlimentoPersonalizado } from '../lib/store'
+
+type Aba = 'painel' | 'alimentos' | 'cardapios' | 'conteudo' | 'roadmap'
+const ABAS: { id: Aba; nome: string; icone: typeof Database }[] = [
+  { id: 'painel', nome: 'Painel', icone: LayoutDashboard },
+  { id: 'alimentos', nome: 'Alimentos', icone: Database },
+  { id: 'cardapios', nome: 'Cardápios e receitas', icone: UtensilsCrossed },
+  { id: 'conteudo', nome: 'Conteúdo do mascote', icone: MessageCircle },
+  { id: 'roadmap', nome: 'Próximos módulos', icone: Rocket },
+]
+
+export function Admin() {
+  const [aba, setAba] = useState<Aba>('painel')
+  return (
+    <div className="adm">
+      <aside>
+        <div className="row"><Mascot size={44} animado={false} /><div className="marca">Papa <b>Prato</b></div></div>
+        <p className="tiny" style={{ color: '#B9D9C8', marginTop: 6 }}>Painel administrativo</p>
+        <nav>
+          {ABAS.map(a => <button key={a.id} aria-current={aba === a.id ? 'page' : undefined} onClick={() => setAba(a.id)}><a.icone size={17} /> {a.nome}</button>)}
+          <button onClick={() => { location.hash = '' }}><ArrowLeft size={17} /> Voltar ao app</button>
+        </nav>
+      </aside>
+      <main className="stack" style={{ gap: 20 }}>
+        {aba === 'painel' && <Painel />}
+        {aba === 'alimentos' && <Alimentos />}
+        {aba === 'cardapios' && <Cardapios />}
+        {aba === 'conteudo' && <Conteudo />}
+        {aba === 'roadmap' && <Roadmap />}
+      </main>
+    </div>
+  )
+}
+
+function Cabecalho({ titulo, texto }: { titulo: string; texto: string }) {
+  return <div><h1>{titulo}</h1><p className="muted" style={{ marginTop: 4, maxWidth: 760 }}>{texto}</p></div>
+}
+
+function Painel() {
+  const base = useAlimentos()
+  useEstado(e => e)
+  const e = obterEstado()
+  const registros = Object.values(e.dias).flatMap(d => d.registros)
+  const porFonte = useMemo(() => {
+    const c: Record<string, number> = {}
+    if (base.pronto) base.lista.forEach(a => { c[a.fonte] = (c[a.fonte] ?? 0) + 1 })
+    return c
+  }, [base.pronto])
+  const top = Object.entries(registros.reduce<Record<string, number>>((m, r) => { m[r.nome] = (m[r.nome] ?? 0) + 1; return m }, {})).sort((a, b) => b[1] - a[1]).slice(0, 8)
+  return (
+    <>
+      <Cabecalho titulo="Painel" texto="Indicadores deste aparelho. Com o servidor (próxima fase), estes números passam a ser de todos os usuários, de forma agregada e anônima." />
+      <div className="kpis">
+        <div className="kpi"><small>Alimentos na base</small><strong>{base.pronto ? fmt(base.lista.length) : '…'}</strong></div>
+        <div className="kpi"><small>Registros no diário</small><strong>{fmt(registros.length)}</strong></div>
+        <div className="kpi"><small>Dias com registro</small><strong>{Object.values(e.dias).filter(d => d.registros.length).length}</strong></div>
+        <div className="kpi"><small>Conquistas</small><strong>{desbloqueadas(e).length}/{CONQUISTAS.length}</strong></div>
+        <div className="kpi"><small>Alimentos da equipe</small><strong>{e.alimentosPersonalizados.length}</strong></div>
+        <div className="kpi"><small>Modelos de refeição</small><strong>{MODELOS.length}</strong></div>
+      </div>
+      <div className="row wrap" style={{ alignItems: 'stretch', gap: 16 }}>
+        <div className="card grow" style={{ minWidth: 280 }}>
+          <h3 style={{ marginBottom: 10 }}>Base de alimentos por fonte</h3>
+          {Object.entries(porFonte).map(([f, n]) => (
+            <div key={f} className="macro" style={{ marginBottom: 10 }}>
+              <div className="row between small"><span>{NOME_FONTE[f as Fonte] ?? 'Equipe Papa Prato'}</span><b className="num">{fmt(n)}</b></div>
+              <div className="bar"><span style={{ width: `${(n / Math.max(...Object.values(porFonte))) * 100}%`, background: 'var(--green)' }} /></div>
+            </div>
+          ))}
+        </div>
+        <div className="card grow" style={{ minWidth: 280 }}>
+          <h3 style={{ marginBottom: 10 }}>Mais registrados</h3>
+          {top.length ? <ol className="small" style={{ margin: 0, paddingLeft: 18, display: 'grid', gap: 4 }}>{top.map(([n, c]) => <li key={n}>{n} <span className="muted num">({c})</span></li>)}</ol> : <p className="muted small">Ainda sem registros.</p>}
+        </div>
+      </div>
+    </>
+  )
+}
+
+function Alimentos() {
+  const base = useAlimentos()
+  const pers = useEstado(e => e.alimentosPersonalizados)
+  const [q, setQ] = useState('')
+  const [edit, setEdit] = useState<AlimentoPersonalizado | null>(null)
+  const res = useMemo(() => base.pronto ? (q ? buscar(base.lista, q, 100) : base.lista.slice(0, 50)) : [], [q, base.pronto])
+  const novo = (): AlimentoPersonalizado => ({ id: 'pp_' + uid(), nome: '', kcal: 0, proteina: 0, carboidrato: 0, gordura: 0, fibra: null, medidas: [], publicado: false, atualizadoEm: new Date().toISOString() })
+  return (
+    <>
+      <Cabecalho titulo="Alimentos" texto="A base oficial (TACO, TBCA, IBGE/POF, USDA, CoFID) é somente leitura: os números nunca são alterados. Para atualizar a base, rode scripts/gerar-alimentos.py a partir do repositório fontes-ref. Itens próprios (ex.: receitas da casa) podem ser cadastrados abaixo e só aparecem no app depois de publicados." />
+      <div className="card stack">
+        <div className="row between"><h3>Alimentos da equipe ({pers.length})</h3><button className="btn sm" onClick={() => setEdit(novo())}><Plus size={16} /> Novo alimento</button></div>
+        {pers.length ? (
+          <div className="tabela-box"><table className="tabela"><thead><tr><th>Nome</th><th className="n">kcal</th><th className="n">P</th><th className="n">C</th><th className="n">G</th><th>Situação</th><th></th></tr></thead>
+            <tbody>{pers.map(p => <tr key={p.id}><td>{p.nome}</td><td className="n">{fmt(p.kcal)}</td><td className="n">{fmt(p.proteina, 1)}</td><td className="n">{fmt(p.carboidrato, 1)}</td><td className="n">{fmt(p.gordura, 1)}</td><td><span className={`tag ${p.publicado ? '' : 'orange'}`}>{p.publicado ? 'Publicado' : 'Rascunho'}</span></td><td><button className="link" onClick={() => setEdit(p)}>Editar</button></td></tr>)}</tbody></table></div>
+        ) : <p className="muted small">Nenhum alimento próprio ainda.</p>}
+      </div>
+      <div className="stack">
+        <input className="input" placeholder="Buscar na base oficial…" value={q} onChange={e => setQ(e.target.value)} style={{ maxWidth: 420 }} />
+        <div className="tabela-box">
+          <table className="tabela">
+            <thead><tr><th>Nome</th><th>Fonte</th><th className="n">kcal</th><th className="n">Prot.</th><th className="n">Carb.</th><th className="n">Gord.</th><th className="n">Fibra</th><th>Medidas</th><th>Alérgenos (estim.)</th></tr></thead>
+            <tbody>{res.map(a => (
+              <tr key={a.id}>
+                <td>{a.nome}<div className="tiny">{a.id}</div></td><td><span className="tag gray">{a.personalizado ? 'Equipe' : a.fonte}</span></td>
+                <td className="n">{fmt(a.kcal)}</td><td className="n">{fmt(a.proteina, 1)}</td><td className="n">{fmt(a.carboidrato, 1)}</td><td className="n">{fmt(a.gordura, 1)}</td><td className="n">{a.fibra == null ? '—' : fmt(a.fibra, 1)}</td>
+                <td className="tiny">{a.medidas.map(m => `${m.nome} (${fmt(m.gramas)} g)`).join(', ') || '—'}</td>
+                <td className="tiny">{alergenosEstimados(a.nome).map(x => ALERGENOS[x].rotulo).join(', ') || '—'}</td>
+              </tr>
+            ))}</tbody>
+          </table>
+        </div>
+      </div>
+      <EditarAlimento item={edit} onFechar={() => setEdit(null)} />
+    </>
+  )
+}
+
+function EditarAlimento({ item, onFechar }: { item: AlimentoPersonalizado | null; onFechar: () => void }) {
+  const [f, setF] = useState<AlimentoPersonalizado | null>(null)
+  if (item && f?.id !== item.id) setF(item)
+  if (!item || !f) return null
+  const existe = obterEstado().alimentosPersonalizados.some(p => p.id === f.id)
+  const salvar = (publicado: boolean) => {
+    const pronto = { ...f, publicado, atualizadoEm: new Date().toISOString() }
+    atualizar(e => ({ ...e, alimentosPersonalizados: existe ? e.alimentosPersonalizados.map(p => p.id === f.id ? pronto : p) : [...e.alimentosPersonalizados, pronto] }))
+    setF(null); onFechar()
+  }
+  const numero = (k: 'kcal' | 'proteina' | 'carboidrato' | 'gordura') => (
+    <div className="field grow"><label>{k === 'kcal' ? 'kcal' : k[0].toUpperCase() + k.slice(1) + ' (g)'} /100 g</label><input className="input" inputMode="decimal" value={f[k]} onChange={e => setF({ ...f, [k]: Number(e.target.value.replace(',', '.')) || 0 })} /></div>
+  )
+  const medida = f.medidas[0]
+  return (
+    <Folha aberta onFechar={() => { setF(null); onFechar() }} titulo={existe ? 'Editar alimento' : 'Novo alimento'}>
+      <div className="stack">
+        <div className="field"><label>Nome</label><input className="input" value={f.nome} onChange={e => setF({ ...f, nome: e.target.value })} placeholder="Ex.: Bolo de cenoura da casa" /></div>
+        <div className="row wrap">{numero('kcal')}{numero('proteina')}</div>
+        <div className="row wrap">{numero('carboidrato')}{numero('gordura')}</div>
+        <div className="row">
+          <div className="field grow"><label>Medida caseira</label><input className="input" value={medida?.nome ?? ''} onChange={e => setF({ ...f, medidas: e.target.value ? [{ nome: e.target.value, gramas: medida?.gramas ?? 100 }] : [] })} placeholder="fatia média" /></div>
+          <div className="field" style={{ width: 110 }}><label>Gramas</label><input className="input" inputMode="decimal" value={medida?.gramas ?? ''} onChange={e => medida && setF({ ...f, medidas: [{ ...medida, gramas: Number(e.target.value) || 0 }] })} /></div>
+        </div>
+        <p className="tiny">Valores por 100 g. Informe de onde vieram (rótulo, cálculo de receita) para manter a rastreabilidade.</p>
+        <div className="row" style={{ gap: 8 }}>
+          <button className="btn ghost grow" onClick={() => salvar(false)} disabled={!f.nome.trim()}>Salvar rascunho</button>
+          <button className="btn grow" onClick={() => salvar(true)} disabled={!f.nome.trim() || f.kcal <= 0}>Publicar</button>
+        </div>
+        {existe && <button className="btn danger" onClick={() => { atualizar(e => ({ ...e, alimentosPersonalizados: e.alimentosPersonalizados.filter(p => p.id !== f.id) })); setF(null); onFechar() }}><Trash2 size={16} /> Excluir</button>}
+      </div>
+    </Folha>
+  )
+}
+
+function Cardapios() {
+  const base = useAlimentos()
+  if (!base.pronto) return <p>Carregando…</p>
+  const linhas = MODELOS.map(m => {
+    const faltando = m.itens.filter(i => !base.porId.get(i.id)).map(i => i.id)
+    const n = somar(m.itens.filter(i => base.porId.get(i.id)).map(i => nutrientesDe(base.porId.get(i.id)!, i.g)))
+    const alerg = [...new Set(m.itens.flatMap(i => base.porId.get(i.id) ? alergenosEstimados(base.porId.get(i.id)!.nome) : []))]
+    return { m, n, faltando, alerg }
+  })
+  return (
+    <>
+      <Cabecalho titulo="Cardápios e receitas" texto="Modelos de refeição usados para montar o cardápio semanal. As porções de referência abaixo são ajustadas automaticamente à meta de cada pessoa. Cada item aponta para um alimento real da base, e a verificação abaixo avisa se algum código sumir numa atualização." />
+      <div className="tabela-box"><table className="tabela">
+        <thead><tr><th>Refeição</th><th>Modelo</th><th>Regiões</th><th className="n">kcal (ref.)</th><th className="n">Prot.</th><th>Alérgenos (estim.)</th><th>Verificação</th></tr></thead>
+        <tbody>{linhas.map(({ m, n, faltando, alerg }) => (
+          <tr key={m.id}><td>{m.refeicao}</td><td>{m.nome}</td><td className="tiny">{m.regioes?.join(', ') ?? 'todas'}</td><td className="n">{fmt(n.kcal)}</td><td className="n">{fmt(n.proteina)}</td><td className="tiny">{alerg.map(a => ALERGENOS[a].rotulo).join(', ') || '—'}</td>
+            <td>{faltando.length ? <span className="tag orange">Faltando: {faltando.join(', ')}</span> : <span className="tag">OK</span>}</td></tr>
+        ))}</tbody>
+      </table></div>
+      <h2>Receitas ({RECEITAS.length})</h2>
+      <div className="kpis">{RECEITAS.map(r => <div key={r.id} className="kpi"><div style={{ fontSize: '1.5rem' }}>{r.emoji}</div><b>{r.nome}</b><small>{r.minutos} min · {r.regiao}</small></div>)}</div>
+      <p className="tiny">Na próxima fase, modelos e receitas passam a ser editados aqui, com aprovação editorial e histórico de versões (A04/A05).</p>
+    </>
+  )
+}
+
+function Conteudo() {
+  const c = useEstado(e => e.conteudo)
+  const [nova, setNova] = useState('')
+  const set = (m: Partial<typeof c>) => atualizar(e => ({ ...e, conteudo: { ...e.conteudo, ...m } }))
+  return (
+    <>
+      <Cabecalho titulo="Conteúdo do mascote" texto="Saudações e dicas que o Papa mostra na tela inicial. As alterações valem na hora neste aparelho." />
+      <div className="row wrap" style={{ alignItems: 'flex-start', gap: 20 }}>
+        <div className="card stack grow" style={{ minWidth: 300 }}>
+          <h3>Saudações</h3>
+          {(['manha', 'tarde', 'noite'] as const).map(k => (
+            <div key={k} className="field"><label>{k === 'manha' ? 'Manhã' : k === 'tarde' ? 'Tarde' : 'Noite'}</label><input className="input" value={c.saudacoes[k]} onChange={e => set({ saudacoes: { ...c.saudacoes, [k]: e.target.value } })} /></div>
+          ))}
+          <h3>Dicas ({c.dicas.length})</h3>
+          <div className="list">{c.dicas.map((d, i) => (
+            <div key={i} className="item"><span className="grow small">{d}</span><button className="icon-btn flat" aria-label="Remover dica" onClick={() => set({ dicas: c.dicas.filter((_, j) => j !== i) })}><Trash2 size={16} /></button></div>
+          ))}</div>
+          <div className="row"><input className="input grow" value={nova} onChange={e => setNova(e.target.value)} placeholder="Nova dica…" /><button className="btn sm" disabled={!nova.trim()} onClick={() => { set({ dicas: [...c.dicas, nova.trim()] }); setNova('') }}>Adicionar</button></div>
+          <button className="link" onClick={() => set({ dicas: DICAS_PADRAO })}>Restaurar dicas padrão</button>
+        </div>
+        <div className="card stack" style={{ width: 300 }}>
+          <h3>Pré-visualização</h3>
+          <div className="row"><Mascot size={70} /><div className="balao small">{c.saudacoes.manha}! {c.dicas[0]}</div></div>
+          <div className="row" style={{ justifyContent: 'space-around' }}><Mascot size={80} humor="festa" /><Mascot size={80} humor="pensativo" /></div>
+          <p className="tiny">Humores disponíveis: feliz, festa (conquistas) e pensativo (carregando, busca vazia).</p>
+        </div>
+      </div>
+    </>
+  )
+}
+
+function Roadmap() {
+  const itens = [
+    { id: 'A02', nome: 'Usuários', o: 'Busca pseudonimizada, status, acesso de suporte com justificativa, sem acesso irrestrito a dados de saúde.' },
+    { id: 'A07', nome: 'Assinaturas', o: 'Planos, webhooks das lojas (Apple/Google) e do gateway, reconciliação, cupons e reembolsos.' },
+    { id: 'A08', nome: 'Suporte', o: 'Tickets, SLA e acesso temporário auditado.' },
+    { id: 'A09', nome: 'Privacidade (LGPD)', o: 'Consentimentos, pedidos de exportação e exclusão, retenção e auditoria. O app já tem exportar e apagar local.' },
+    { id: 'A10', nome: 'IA', o: 'Foto do prato, conversa com o Papa, versões de prompt, limites, custos e fallback. Só com consentimento.' },
+    { id: 'A11', nome: 'Gamificação', o: 'Regras de conquistas e campanhas editáveis, com prevenção de fraude.' },
+    { id: 'A12', nome: 'Profissionais', o: 'Nutricionistas com CRN verificado acompanhando pacientes.' },
+    { id: 'A13', nome: 'Observabilidade', o: 'Disponibilidade, latência, erros e alertas.' },
+    { id: 'A14', nome: 'Configuração', o: 'Papéis (RBAC), MFA, integrações, backups e restauração.' },
+  ]
+  return (
+    <>
+      <Cabecalho titulo="Próximos módulos" texto="Do projeto original de 14 módulos, estes dependem de servidor, contas e autenticação. Ficam para a fase 2." />
+      <div className="kpis">{itens.map(i => <div key={i.id} className="kpi stack" style={{ gap: 6 }}><span className="tag gray" style={{ width: 'fit-content' }}>{i.id}</span><b>{i.nome}</b><small>{i.o}</small></div>)}</div>
+      <div className="card row"><ListChecks /><p className="small">Já funcionando nesta versão: A01 Painel (local), A03 Alimentos, A05 Cardápios (verificação), A06 Conteúdo do mascote.</p></div>
+    </>
+  )
+}

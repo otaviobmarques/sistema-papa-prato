@@ -1,0 +1,11 @@
+{
+  "name": "Papa Prato",
+  "short_name": "Papa Prato",
+  "description": "Dietas e programas alimentares",
+  "start_url": "./",
+  "display": "standalone",
+  "background_color": "#FFF5EC",
+  "theme_color": "#FFF5EC",
+  "lang": "pt-BR",
+  "icons": [{ "src": "icon.svg", "sizes": "any", "type": "image/svg+xml", "purpose": "any maskable" }]
+}
