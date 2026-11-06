@@ -12,7 +12,7 @@ npm run dev          # desenvolvimento em http://localhost:5173
 npm run build        # versão de produção em dist/
 ```
 
-Painel administrativo: abra o app com `#/admin` no fim do endereço, ou vá em Perfil → Painel administrativo.
+Painel administrativo: abra o app com `#admin` no fim do endereço, ou vá em Perfil → Painel administrativo.
 
 ## O que já funciona
 

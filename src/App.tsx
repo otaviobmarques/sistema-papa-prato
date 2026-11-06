@@ -39,7 +39,7 @@ export function App() {
   const hash = useHash()
   const perfil = useEstado(e => e.perfil)
   useEffect(() => { carregarAlimentos().catch(() => {}) }, []) // já começa a baixar a base
-  if (hash.startsWith('#/admin')) return <Admin />
+  if (hash.startsWith('#admin')) return <Admin />
   if (!perfil) return <Onboarding />
   return <AppPrincipal />
 }

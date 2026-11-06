@@ -100,10 +100,12 @@ function ListaCompras({ aberta, onFechar, semana }: { aberta: boolean; onFechar:
   const lista = listaDeCompras(semana)
   const texto = 'Lista de compras — Papa Prato\n' + lista.map(i => `${marcados[i.alimento.id] ? '✓' : '□'} ${nomeCurto(i.alimento.nome).split(' · ').slice(0, 2).join(' ')} — ${quantidade(i.gramas)}`).join('\n')
   const compartilhar = async () => {
-    try {
-      if (navigator.share) await navigator.share({ title: 'Lista de compras', text: texto })
-      else { await navigator.clipboard.writeText(texto); avisar('Lista copiada!') }
-    } catch { /* cancelado */ }
+    if (navigator.share) {
+      try { await navigator.share({ title: 'Lista de compras', text: texto }); return }
+      catch (e) { if ((e as Error).name === 'AbortError') return } // cancelado pela pessoa
+    }
+    try { await navigator.clipboard.writeText(texto); avisar('Lista copiada!') }
+    catch { avisar('Não foi possível copiar a lista neste navegador.') }
   }
   return (
     <Folha aberta={aberta} onFechar={onFechar} titulo="Lista da semana" cheia>

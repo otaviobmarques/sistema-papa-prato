@@ -91,7 +91,7 @@ export function Perfil() {
         <p className="tiny" style={{ marginTop: 8 }}>Alérgenos são estimados pelo nome do alimento. Confira sempre o rótulo.</p>
       </div>
 
-      <a className="btn ghost block" href="#/admin" style={{ textDecoration: 'none' }}><LayoutDashboard size={18} /> Painel administrativo (equipe)</a>
+      <a className="btn ghost block" href="#admin" style={{ textDecoration: 'none' }}><LayoutDashboard size={18} /> Painel administrativo (equipe)</a>
       <p className="tiny" style={{ textAlign: 'center' }}>Papa Prato · versão 0.1</p>
 
       <Folha aberta={confirmar} onFechar={() => setConfirmar(false)} titulo="Apagar todos os dados?">
