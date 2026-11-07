@@ -2,7 +2,7 @@ import { useMemo, useState } from 'react'
 import { AlertTriangle, CheckCircle2, Clock, RefreshCw, Share2, ShoppingCart } from 'lucide-react'
 import { Folha, avisar, fmt, useAlimentos } from '../components/ui'
 import { Mascot } from '../components/Mascot'
-import { RECEITAS, type Receita } from '../data/cardapio'
+import { receitasAtivas, type Receita } from '../data/cardapio'
 import { ALERGENOS, alergenosEstimados } from '../lib/alergias'
 import { nomeCurto, nutrientesDe, somar, type Alimento } from '../lib/alimentos'
 import { calcularMetas } from '../lib/metas'
@@ -13,13 +13,15 @@ export function Plano() {
   const base = useAlimentos()
   const perfil = useEstado(e => e.perfil)
   const plano = useEstado(e => e.plano)
+  const modelosEquipe = useEstado(e => e.modelosEquipe)
+  useEstado(e => e.receitasEquipe)
   const [dia, setDia] = useState(new Date().getDay())
   const [aba, setAba] = useState<'cardapio' | 'receitas'>('cardapio')
   const [compras, setCompras] = useState(false)
   const [receita, setReceita] = useState<Receita | null>(null)
   const metas = calcularMetas(perfil)
 
-  const semana = useMemo(() => base.pronto ? DIAS_SEMANA.map((_, d) => planoDoDia(d, plano.semente, plano.trocas, perfil, metas, base.porId)) : [], [base.pronto, plano, perfil])
+  const semana = useMemo(() => base.pronto ? DIAS_SEMANA.map((_, d) => planoDoDia(d, plano.semente, plano.trocas, perfil, metas, base.porId)) : [], [base.pronto, plano, perfil, modelosEquipe])
   if (!base.pronto) return <div className="empty"><Mascot size={80} humor="pensativo" />Preparando seu cardápio…</div>
 
   const refs = semana[dia]
@@ -73,7 +75,7 @@ export function Plano() {
         </>
       ) : (
         <div className="stack">
-          {RECEITAS.map(rc => {
+          {receitasAtivas().map(rc => {
             const n = somar(rc.itens.map(i => base.porId.get(i.id) ? nutrientesDe(base.porId.get(i.id)!, i.g) : { kcal: 0, proteina: 0, carboidrato: 0, gordura: 0, fibra: 0 }))
             return (
               <button key={rc.id} className="card tap row" onClick={() => setReceita(rc)}>

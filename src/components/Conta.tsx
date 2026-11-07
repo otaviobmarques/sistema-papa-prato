@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react'
-import { Cloud, CloudOff, LogOut, Mail, RefreshCw, Trash2 } from 'lucide-react'
+import { Cloud, CloudOff, LogOut, Mail, MonitorSmartphone, RefreshCw, Trash2 } from 'lucide-react'
 import { Folha, avisar } from './ui'
 import { enviarLinkDeAcesso, supabase, useSessao } from '../lib/supabase'
 import { aoMudarSituacao, apagarConta, obterSituacao, sairDaConta, sincronizar } from '../lib/sync'
@@ -72,6 +72,15 @@ export function CartaoConta() {
         <button className="btn danger sm" onClick={() => setExcluir(true)}><Trash2 size={16} /> Excluir conta</button>
       </div>
       <p className="tiny">Ao sair, os dados deste aparelho são apagados; eles continuam na sua conta.</p>
+      <div className="row between" style={{ borderTop: '1px solid var(--line)', paddingTop: 12, gap: 10 }}>
+        <span className="tiny grow"><MonitorSmartphone size={14} style={{ verticalAlign: '-2px' }} /> Último acesso: {sessao.user.last_sign_in_at ? new Date(sessao.user.last_sign_in_at).toLocaleString('pt-BR', { dateStyle: 'short', timeStyle: 'short' }) : '—'}</span>
+        <button className="btn ghost sm" disabled={ocupado} onClick={async () => {
+          setOcupado(true)
+          const { error } = await supabase!.auth.signOut({ scope: 'others' })
+          avisar(error ? 'Não foi possível agora. Tente de novo.' : 'Pronto: sua conta saiu de todos os outros aparelhos.')
+          setOcupado(false)
+        }}>Sair dos outros aparelhos</button>
+      </div>
 
       <Folha aberta={excluir} onFechar={() => setExcluir(false)} titulo="Excluir sua conta?">
         <div className="stack">

@@ -15,6 +15,7 @@ export function Inicio({ irPara, adicionar }: { irPara: (t: string) => void; adi
   const dia = useEstado(e => e.dias[data]) ?? diaVazio()
   const conteudo = useEstado(e => e.conteudo)
   const plano = useEstado(e => e.plano)
+  const modelosEquipe = useEstado(e => e.modelosEquipe)
   useEstado(e => e.dias) // atualiza a sequência
   const metas = calcularMetas(perfil)
   const total = somar(dia.registros.map(r => r.n))
@@ -33,7 +34,7 @@ export function Inicio({ irPara, adicionar }: { irPara: (t: string) => void; adi
     const ordem: Refeicao[] = ['cafe', 'almoco', 'lanche', 'jantar']
     const idxAgora = h < 10 ? 0 : h < 15 ? 1 : h < 18 ? 2 : 3
     return refs.find(r => ordem.indexOf(r.refeicao) >= idxAgora && !registradas.has(r.refeicao)) ?? null
-  }, [base.pronto, dia.registros.length, plano, perfil, h])
+  }, [base.pronto, dia.registros.length, plano, perfil, h, modelosEquipe])
 
   const fala = total.kcal === 0
     ? 'Vamos registrar a primeira refeição do dia?'

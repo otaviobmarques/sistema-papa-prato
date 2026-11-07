@@ -1,6 +1,7 @@
 import { useSyncExternalStore } from 'react'
 import type { Alergeno } from './alergias'
 import type { Fonte, Medida, Nutrientes } from './alimentos'
+import type { Modelo, Receita } from '../data/cardapio'
 
 export type Refeicao = 'cafe' | 'almoco' | 'lanche' | 'jantar' | 'ceia'
 export const REFEICOES: { id: Refeicao; nome: string; emoji: string }[] = [
@@ -55,6 +56,9 @@ export type Estado = {
   conteudo: { dicas: string[]; saudacoes: { manha: string; tarde: string; noite: string } }
   tourVisto: boolean
   produtos: Record<string, Produto>
+  // Cardápio e receitas publicados pela equipe (vêm do servidor; sem conexão, valem os do código)
+  modelosEquipe?: Modelo[]
+  receitasEquipe?: Receita[]
   atualizadoEm?: string // última mudança nos campos sincronizados (fora os dias)
 }
 

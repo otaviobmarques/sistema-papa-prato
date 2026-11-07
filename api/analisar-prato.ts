@@ -59,7 +59,8 @@ const Resultado = z.object({
 type TResultado = z.infer<typeof Resultado>
 
 let clienteClaude: Anthropic | null = null
-async function analisarComClaude(imagem: string, tipo: string): Promise<TResultado> {
+type Uso = { tokens_entrada?: number; tokens_saida?: number }
+async function analisarComClaude(imagem: string, tipo: string, uso: Uso): Promise<TResultado> {
   clienteClaude ??= new Anthropic() // lê ANTHROPIC_API_KEY do ambiente
   const r = await clienteClaude.beta.messages.parse({
     model: MODELO_CLAUDE,
@@ -75,6 +76,7 @@ async function analisarComClaude(imagem: string, tipo: string): Promise<TResulta
       ],
     }],
   })
+  uso.tokens_entrada = r.usage?.input_tokens; uso.tokens_saida = r.usage?.output_tokens
   if (r.stop_reason === 'refusal') throw new Error('recusa: ' + (r.stop_details?.category ?? 'sem categoria'))
   if (!r.parsed_output) throw new Error('resposta sem JSON válido (stop_reason ' + r.stop_reason + ')')
   return r.parsed_output
@@ -82,6 +84,20 @@ async function analisarComClaude(imagem: string, tipo: string): Promise<TResulta
 
 const json = (status: number, corpo: unknown) =>
   new Response(JSON.stringify(corpo), { status, headers: { 'content-type': 'application/json; charset=utf-8', 'cache-control': 'no-store' } })
+
+// A10: registra cada chamada (sem foto nem conteúdo) com o token da própria pessoa; a regra do banco só
+// permite gravar o próprio uso. Falhar aqui nunca atrapalha a resposta.
+async function registrarUso(token: string, uid: string, provedor: 'claude' | 'gemini' | 'vertex', modelo: string, ok: boolean, inicio: number, uso: Uso, erro?: string) {
+  const url = process.env.SUPABASE_URL, chave = process.env.SUPABASE_PUBLISHABLE_KEY
+  if (!url || !chave) return
+  try {
+    await fetch(`${url}/rest/v1/ia_uso`, {
+      method: 'POST',
+      headers: { apikey: chave, authorization: `Bearer ${token}`, 'content-type': 'application/json', prefer: 'return=minimal' },
+      body: JSON.stringify({ user_id: uid, provedor, modelo, ok, ms: Date.now() - inicio, tokens_entrada: uso.tokens_entrada ?? null, tokens_saida: uso.tokens_saida ?? null, erro: erro ? erro.slice(0, 300) : null }),
+    })
+  } catch (e) { console.error('registro de uso', (e as Error).message) }
+}
 
 async function usuarioDoToken(token: string): Promise<string | null> {
   const url = process.env.SUPABASE_URL, chave = process.env.SUPABASE_PUBLISHABLE_KEY
@@ -157,12 +173,15 @@ export async function POST(req: Request) {
   // 1º Claude; se falhar (fora do ar, limite, recusa), tenta o Gemini antes de devolver erro.
   const temGemini = !!(process.env.GOOGLE_SERVICE_ACCOUNT_JSON || process.env.GEMINI_API_KEY)
   if (process.env.ANTHROPIC_API_KEY) {
+    const inicio = Date.now(), uso: Uso = {}
     try {
-      return json(200, { ...limpar(await analisarComClaude(imagem, tipo)), modelo: MODELO_CLAUDE })
+      const res = await analisarComClaude(imagem, tipo, uso)
+      await registrarUso(token, uid, 'claude', MODELO_CLAUDE, true, inicio, uso)
+      return json(200, { ...limpar(res), modelo: MODELO_CLAUDE })
     } catch (e) {
-      if (e instanceof Anthropic.AuthenticationError) console.error('Claude: chave inválida')
-      else if (e instanceof Anthropic.APIError) console.error('Claude', e.status, e.message)
-      else console.error('Claude', (e as Error).message)
+      const msg = e instanceof Anthropic.APIError ? `${e.status} ${e.message}` : (e as Error).message
+      console.error('Claude', msg)
+      await registrarUso(token, uid, 'claude', MODELO_CLAUDE, false, inicio, uso, msg)
       if (!temGemini) {
         if (e instanceof Anthropic.RateLimitError) return json(429, { erro: 'Muita gente analisando fotos agora. Tente de novo em instantes.' })
         return json(502, { erro: 'A análise não funcionou agora. Tente de novo ou registre pela busca.' })
@@ -171,15 +190,20 @@ export async function POST(req: Request) {
     }
   }
 
+  const provedorG = process.env.GOOGLE_SERVICE_ACCOUNT_JSON ? 'vertex' : 'gemini'
+  const inicio = Date.now(), uso: Uso = {}
   try {
-    return json(200, { ...limpar(await analisarComGemini(imagem, tipo)), modelo: MODELO })
+    const res = await analisarComGemini(imagem, tipo, uso)
+    await registrarUso(token, uid, provedorG, MODELO, true, inicio, uso)
+    return json(200, { ...limpar(res), modelo: MODELO })
   } catch (e) {
     console.error('Gemini', (e as Error).message)
+    await registrarUso(token, uid, provedorG, MODELO, false, inicio, uso, (e as Error).message)
     return json(502, { erro: 'A análise não funcionou agora. Tente de novo ou registre pela busca.' })
   }
 }
 
-async function analisarComGemini(imagem: string, tipo: string): Promise<TResultado> {
+async function analisarComGemini(imagem: string, tipo: string, uso: Uso): Promise<TResultado> {
   const r = await chamarGemini({
     contents: [{ role: 'user', parts: [{ text: PROMPT }, { inlineData: { mimeType: tipo, data: imagem } }] }],
     generationConfig: { temperature: 0.2, responseMimeType: 'application/json', responseSchema: ESQUEMA },
@@ -187,6 +211,7 @@ async function analisarComGemini(imagem: string, tipo: string): Promise<TResulta
   if (!r) throw new Error('sem credenciais')
   if (!r.ok) throw new Error(`HTTP ${r.status}: ${(await r.text()).slice(0, 300)}`)
   const dados = await r.json()
+  uso.tokens_entrada = dados?.usageMetadata?.promptTokenCount; uso.tokens_saida = dados?.usageMetadata?.candidatesTokenCount
   const texto = dados?.candidates?.[0]?.content?.parts?.map((p: { text?: string }) => p.text ?? '').join('') ?? ''
   return Resultado.parse(JSON.parse(texto))
 }

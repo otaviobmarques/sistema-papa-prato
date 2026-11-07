@@ -1,4 +1,4 @@
-import { MODELOS, type Modelo } from '../data/cardapio'
+import { modelosAtivos, type Modelo } from '../data/cardapio'
 import { alergenosEstimados, temCarne, temOrigemAnimal } from './alergias'
 import { nutrientesDe, semAcento, somar, type Alimento, type Nutrientes } from './alimentos'
 import { DIVISAO_REFEICOES, type Metas } from './metas'
@@ -23,7 +23,7 @@ export function modeloPermitido(m: Modelo, perfil: Perfil | null, porId: Map<str
 }
 
 function candidatos(refeicao: Refeicao, perfil: Perfil | null, porId: Map<string, Alimento>) {
-  const ok = MODELOS.filter(m => m.refeicao === refeicao && modeloPermitido(m, perfil, porId))
+  const ok = modelosAtivos().filter(m => m.refeicao === refeicao && modeloPermitido(m, perfil, porId))
   if (perfil?.tempo === 'rapido') ok.sort((a, b) => Number(b.tempo === 'rapido') - Number(a.tempo === 'rapido'))
   // pratos da região da pessoa aparecem com mais frequência
   if (perfil && perfil.regiao !== 'misturar') {
@@ -44,6 +44,8 @@ export function montarRefeicao(m: Modelo, alvoKcal: number, porId: Map<string, A
   })
   return { itens, total: somar(itens.map(x => x.n)) }
 }
+
+export function candidatosPara(refeicao: Refeicao, perfil: Perfil | null, porId: Map<string, Alimento>) { return candidatos(refeicao, perfil, porId) }
 
 export function planoDoDia(dia: number, semente: number, trocas: Record<string, number>, perfil: Perfil | null, metas: Metas, porId: Map<string, Alimento>): RefeicaoPlano[] {
   const out: RefeicaoPlano[] = []

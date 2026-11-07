@@ -79,3 +79,8 @@ export const RECEITAS: Receita[] = [
     extras: ['farofa (opcional)'],
     passos: ['Deixe o feijão e as carnes de molho na véspera.', 'Cozinhe na pressão por 40 minutos.', 'Refogue a couve com alho.', 'Sirva com arroz e laranja — a vitamina C ajuda a absorver o ferro do feijão.'] },
 ]
+
+// Usa o que a equipe publicou no painel; sem conexão (ou antes de carregar), o que vem no código.
+import { obterEstado } from '../lib/store'
+export const modelosAtivos = (): Modelo[] => { const m = obterEstado().modelosEquipe; return m && m.length ? m : MODELOS }
+export const receitasAtivas = (): Receita[] => { const r = obterEstado().receitasEquipe; return r && r.length ? r : RECEITAS }
