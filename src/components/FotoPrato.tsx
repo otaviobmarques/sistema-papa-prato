@@ -33,7 +33,7 @@ export function FotoPrato({ lista, data, refeicaoInicial, onVoltar, onPronto }: 
   if (!consentiu) return (
     <div className="stack">{voltar}<h2>Foto do prato</h2>
       <div className="card stack">
-        <p className="small">A foto é enviada para o <b>Gemini (Google)</b>, que identifica os alimentos e estima as porções. A foto não fica guardada no Papa Prato.</p>
+        <p className="small">A foto é enviada para o <b>Claude (Anthropic)</b>, que identifica os alimentos e estima as porções. A foto não fica guardada no Papa Prato.</p>
         <p className="small muted">Os valores nutricionais vêm das tabelas TACO e TBCA, e você revisa tudo antes de salvar.</p>
         <button className="btn block" onClick={() => { atualizar(e => ({ ...e, consentimento: { ...e.consentimento!, ia: true } })); registrarConsentimento('ia', true) }}><Sparkles size={18} /> Permitir análise por IA</button>
         <p className="tiny">Você pode desligar em Perfil → Privacidade.</p>
@@ -135,7 +135,7 @@ function Revisao({ linhas, setLinhas, res, foto, refeicao, setRefeicao, onOutra,
           <div className="chips">{REFEICOES.map(r => <button key={r.id} className="chip" aria-pressed={refeicao === r.id} onClick={() => setRefeicao(r.id)}>{r.emoji} {r.nome}</button>)}</div>
           <button className="btn block" disabled={!n} onClick={onSalvar}>Adicionar {n} {n === 1 ? 'item' : 'itens'} ao diário</button>
           <button className="btn ghost block" onClick={onOutra}>Tirar outra foto</button>
-          <p className="fonte-cit">Identificação: Gemini (Google). Valores nutricionais: TACO (NEPA/UNICAMP) e TBCA (USP/FoRC).</p>
+          <p className="fonte-cit">Identificação: Claude (Anthropic). Valores nutricionais: TACO (NEPA/UNICAMP) e TBCA (USP/FoRC).</p>
         </>
       )}
     </div>

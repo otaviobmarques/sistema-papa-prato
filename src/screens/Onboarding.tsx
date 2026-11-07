@@ -80,7 +80,7 @@ export function Onboarding() {
             <label className="check-card"><input type="checkbox" checked={consent.termos} onChange={e => setConsent({ ...consent, termos: e.target.checked })} />
               <span><b>Aceito os termos de uso e a política de privacidade</b><br /><span className="small muted">Obrigatório. Seus dados ficam no aparelho; com conta, também na nuvem.</span></span></label>
             <label className="check-card"><input type="checkbox" checked={consent.ia} onChange={e => setConsent({ ...consent, ia: e.target.checked })} />
-              <span><b>Sugestões personalizadas por IA</b> <span className="tag gray">opcional</span><br /><span className="small muted">Permite analisar fotos do prato com o Gemini (Google). Você pode mudar depois.</span></span></label>
+              <span><b>Sugestões personalizadas por IA</b> <span className="tag gray">opcional</span><br /><span className="small muted">Permite analisar fotos do prato com o Claude (Anthropic). Você pode mudar depois.</span></span></label>
             <label className="check-card"><input type="checkbox" checked={consent.novidades} onChange={e => setConsent({ ...consent, novidades: e.target.checked })} />
               <span><b>Novidades e ofertas</b> <span className="tag gray">opcional</span></span></label>
             <p className="tiny row"><ShieldCheck size={14} /> Você pode revisar essas escolhas em Perfil → Privacidade.</p>
