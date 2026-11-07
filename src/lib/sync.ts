@@ -1,3 +1,4 @@
+import { cancelarAssinatura } from './assinatura'
 // Sincronização com a nuvem. O app continua "local primeiro": tudo é salvo no aparelho na hora
 // e enviado ao Supabase em segundo plano. Em conflito, vence a versão alterada por último
 // (por dia do diário e para o documento do perfil).
@@ -143,6 +144,9 @@ export async function sairDaConta() {
 
 export async function apagarConta() {
   if (!supabase) return
+  // Cancela a cobrança recorrente no Asaas antes de apagar a conta, para ninguém ser cobrado depois.
+  const { data: acesso } = await supabase.rpc('meu_acesso')
+  if (acesso?.asaas_assinatura_id && acesso.status !== 'cancelada') await cancelarAssinatura()
   const { error } = await supabase.rpc('apagar_minha_conta')
   if (error) throw error
   await supabase.auth.signOut()

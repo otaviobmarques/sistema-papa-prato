@@ -3,6 +3,7 @@ import { Download, LayoutDashboard, LifeBuoy, PlayCircle, Trash2 } from 'lucide-
 import { Suporte } from './Suporte'
 import { Folha, fmt } from '../components/ui'
 import { CartaoConta } from '../components/Conta'
+import { MinhaAssinatura } from '../components/MinhaAssinatura'
 import { CartaoInstalar } from '../components/Instalar'
 import { Assinatura } from '../components/Assinatura'
 import { registrarConsentimento } from '../lib/sync'
@@ -42,6 +43,7 @@ export function Perfil() {
       <div className="row"><Mascot size={70} /><div><h1>{perfil.apelido}</h1><p className="small muted">Desde {new Date(perfil.criadoEm).toLocaleDateString('pt-BR')}</p></div></div>
 
       <CartaoConta />
+      <MinhaAssinatura />
       <CartaoInstalar />
       <div className="row" style={{ gap: 10 }}>
         <button className="btn ghost grow" onClick={() => setSuporte(true)}><LifeBuoy size={18} /> Ajuda e suporte</button>
