@@ -2,6 +2,7 @@ import { useEffect, useMemo, useState } from 'react'
 import { ArrowLeft, Database, LogOut, LayoutDashboard, ListChecks, MessageCircle, Plus, Rocket, Trash2, UtensilsCrossed } from 'lucide-react'
 import { Folha, avisar, Avisos, fmt, useAlimentos } from '../components/ui'
 import { FormularioLink } from '../components/Conta'
+import { Assinatura } from '../components/Assinatura'
 import { carregarAlimentosEquipe, excluirAlimentoEquipe, publicarConteudo, salvarAlimentoEquipe, usePapel } from '../lib/equipe'
 import { supabase, traduzirErro, useSessao } from '../lib/supabase'
 import { Mascot } from '../components/Mascot'
@@ -40,6 +41,7 @@ export function Admin() {
         )}
       </div>
       <a className="btn ghost block" href="#" style={{ textDecoration: 'none' }}><ArrowLeft size={18} /> Voltar ao app</a>
+      <Assinatura centro />
     </div>
   )
   return <PainelAdmin modo="servidor" />
@@ -97,6 +99,7 @@ function PainelAdmin({ modo }: { modo: 'local' | 'servidor' }) {
           <button onClick={() => { location.hash = '' }}><ArrowLeft size={17} /> Voltar ao app</button>
           {modo === 'servidor' && <button onClick={() => supabase!.auth.signOut()}><LogOut size={17} /> Sair</button>}
         </nav>
+        <div style={{ marginTop: 24 }}><Assinatura escuro /></div>
         <p className="tiny" style={{ color: '#B9D9C8', marginTop: 18 }}>{modo === 'servidor' ? 'Alterações salvas no servidor e publicadas para todos.' : 'Modo local: alterações valem só neste aparelho.'}</p>
       </aside>
       <main className="stack" style={{ gap: 20 }}>

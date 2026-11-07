@@ -41,7 +41,7 @@ let carregando: Promise<Base> | null = null
 export function carregarAlimentos(): Promise<Base> {
   if (cache) return Promise.resolve(cache)
   if (!carregando) {
-    carregando = fetch('./data/alimentos.json')
+    carregando = fetch('/data/alimentos.json')
       .then(r => { if (!r.ok) throw new Error('Não foi possível carregar a base de alimentos'); return r.json() })
       .then((j: { fontes: Fonte[]; citacao: Record<string, string>; alimentos: unknown[][] }) => {
         const lista = j.alimentos.map(a => {

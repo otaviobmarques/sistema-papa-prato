@@ -2,6 +2,7 @@ import { useState } from 'react'
 import { Download, LayoutDashboard, Trash2 } from 'lucide-react'
 import { Folha, fmt } from '../components/ui'
 import { CartaoConta } from '../components/Conta'
+import { Assinatura } from '../components/Assinatura'
 import { registrarConsentimento } from '../lib/sync'
 import { Mascot } from '../components/Mascot'
 import { ALERGENOS, type Alergeno } from '../lib/alergias'
@@ -96,7 +97,8 @@ export function Perfil() {
       </div>
 
       <a className="btn ghost block" href="#admin" style={{ textDecoration: 'none' }}><LayoutDashboard size={18} /> Painel administrativo (equipe)</a>
-      <p className="tiny" style={{ textAlign: 'center' }}>Papa Prato · versão 0.1</p>
+      <p className="tiny" style={{ textAlign: 'center' }}>Papa Prato · versão 0.2</p>
+      <Assinatura centro />
 
       <Folha aberta={confirmar} onFechar={() => setConfirmar(false)} titulo="Apagar todos os dados?">
         <div className="stack">
