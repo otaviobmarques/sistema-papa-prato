@@ -1,10 +1,11 @@
 import { useEffect, useMemo, useState } from 'react'
-import { Activity, ArrowLeft, BookOpen, Bot, Database, LifeBuoy, LogOut, Shield, UserCog, Users, LayoutDashboard, ListChecks, MessageCircle, Plus, Rocket, Trash2, UtensilsCrossed } from 'lucide-react'
+import { Activity, ArrowLeft, BookOpen, Bot, Database, LifeBuoy, LogOut, Shield, UserCog, Users, LayoutDashboard, ListChecks, BadgeDollarSign, MessageCircle, Plus, Rocket, Trash2, UtensilsCrossed } from 'lucide-react'
 import { Folha, avisar, Avisos, fmt, useAlimentos } from '../components/ui'
 import { FormularioLink } from '../components/Conta'
 import { Assinatura } from '../components/Assinatura'
 import { Equipe, IA, PainelServidor, Privacidade, Saude, SuporteEquipe, Usuarios } from './Modulos'
 import { EditorCardapios, EditorReceitas } from './Editores'
+import { Planos } from './Planos'
 import { carregarAlimentosEquipe, excluirAlimentoEquipe, publicarConteudo, salvarAlimentoEquipe, usePapel } from '../lib/equipe'
 import { supabase, traduzirErro, useSessao } from '../lib/supabase'
 import { Mascot } from '../components/Mascot'
@@ -14,7 +15,7 @@ import { buscar, NOME_FONTE, nutrientesDe, somar, type Fonte } from '../lib/alim
 import { CONQUISTAS, desbloqueadas } from '../lib/conquistas'
 import { DICAS_PADRAO, atualizar, obterEstado, uid, useEstado, type AlimentoPersonalizado } from '../lib/store'
 
-type Aba = 'painel' | 'usuarios' | 'suporte' | 'alimentos' | 'cardapios' | 'receitas' | 'conteudo' | 'ia' | 'privacidade' | 'saude' | 'equipe' | 'roadmap'
+type Aba = 'painel' | 'usuarios' | 'suporte' | 'alimentos' | 'cardapios' | 'receitas' | 'conteudo' | 'planos' | 'ia' | 'privacidade' | 'saude' | 'equipe' | 'roadmap'
 const ABAS: { id: Aba; nome: string; icone: typeof Database; servidor?: boolean }[] = [
   { id: 'painel', nome: 'Painel', icone: LayoutDashboard },
   { id: 'usuarios', nome: 'Usuários', icone: Users, servidor: true },
@@ -23,6 +24,7 @@ const ABAS: { id: Aba; nome: string; icone: typeof Database; servidor?: boolean 
   { id: 'cardapios', nome: 'Cardápios', icone: UtensilsCrossed },
   { id: 'receitas', nome: 'Receitas', icone: BookOpen, servidor: true },
   { id: 'conteudo', nome: 'Conteúdo do mascote', icone: MessageCircle },
+  { id: 'planos', nome: 'Planos e preços', icone: BadgeDollarSign, servidor: true },
   { id: 'ia', nome: 'Inteligência artificial', icone: Bot, servidor: true },
   { id: 'privacidade', nome: 'Privacidade', icone: Shield, servidor: true },
   { id: 'saude', nome: 'Saúde do sistema', icone: Activity, servidor: true },
@@ -115,6 +117,7 @@ function PainelAdmin({ modo }: { modo: 'local' | 'servidor' }) {
         {aba === 'painel' && (modo === 'servidor' ? <PainelServidor /> : <Painel />)}
         {aba === 'usuarios' && <Usuarios />}
         {aba === 'suporte' && <SuporteEquipe />}
+        {aba === 'planos' && <Planos />}
         {aba === 'ia' && <IA />}
         {aba === 'privacidade' && <Privacidade />}
         {aba === 'saude' && <Saude />}
@@ -319,7 +322,7 @@ function Conteudo() {
 
 function Roadmap() {
   const itens = [
-    { id: 'A07', nome: 'Assinaturas', o: 'Planos pagos (Plus) com o Asaas: Pix, cartão e boleto recorrente, cupons e reembolsos. Falta definir preços e a chave do Asaas.' },
+    { id: 'A07', nome: 'Assinaturas', o: 'Planos pagos (Plus) com o Asaas: Pix, cartão e boleto recorrente, cupons e reembolsos. Preços já editáveis em Planos e preços e webhook pronto; falta a chave da API do Asaas para gerar as cobranças.' },
     { id: 'A11', nome: 'Gamificação', o: 'Criar conquistas e campanhas pelo painel, com regras contra fraude.' },
     { id: 'A12', nome: 'Profissionais', o: 'Nutricionistas com CRN verificado acompanhando pacientes. Precisa de decisão de negócio.' },
     { id: 'T34', nome: 'Conversa com o Papa', o: 'Chat com a IA sobre alimentação, com histórico que a pessoa pode apagar. Candidato ao Plus.' },
