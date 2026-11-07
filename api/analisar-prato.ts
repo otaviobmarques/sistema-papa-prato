@@ -2,12 +2,17 @@
 // estimar as porções. As credenciais existem só aqui no servidor. A foto não é guardada.
 // Os valores nutricionais NÃO vêm da IA: o app liga cada item à base TACO/TBCA e a pessoa revisa.
 //
-// Dois caminhos para o mesmo modelo:
-//  - Vertex AI (Google Cloud), preferido: GOOGLE_SERVICE_ACCOUNT_JSON (+ GOOGLE_CLOUD_LOCATION, padrão "global").
-//  - Gemini API (AI Studio): GEMINI_API_KEY.
+// Provedores, na ordem de preferência (usa o primeiro que estiver configurado na Vercel):
+//  1. Claude (Anthropic): ANTHROPIC_API_KEY  (+ CLAUDE_MODEL, padrão claude-opus-5-5)
+//  2. Gemini no Vertex AI (Google Cloud): GOOGLE_SERVICE_ACCOUNT_JSON (+ GOOGLE_CLOUD_LOCATION)
+//  3. Gemini API (AI Studio): GEMINI_API_KEY
 import { createSign } from 'node:crypto'
+import Anthropic from '@anthropic-ai/sdk'
+import { zodOutputFormat } from '@anthropic-ai/sdk/helpers/zod'
+import { z } from 'zod'
 
 const MODELO = process.env.GEMINI_MODEL || 'gemini-3.8-flash'
+const MODELO_CLAUDE = process.env.CLAUDE_MODEL || 'claude-opus-5-5'
 const LIMITE_POR_HORA = 20
 const usos = new Map<string, number[]>() // limite simples por pessoa (por instância)
 
@@ -42,6 +47,38 @@ const ESQUEMA = {
     observacao: { type: 'STRING' },
   },
   required: ['e_comida', 'itens'],
+}
+
+// Mesmo formato de resposta, validado pelo SDK (saída estruturada).
+const Resultado = z.object({
+  e_comida: z.boolean(),
+  itens: z.array(z.object({
+    nome: z.string(), busca: z.string(), gramas: z.number(), confianca: z.enum(['alta', 'media', 'baixa']),
+  })),
+  observacao: z.string(),
+})
+type TResultado = z.infer<typeof Resultado>
+
+let clienteClaude: Anthropic | null = null
+async function analisarComClaude(imagem: string, tipo: string): Promise<TResultado> {
+  clienteClaude ??= new Anthropic() // lê ANTHROPIC_API_KEY do ambiente
+  const r = await clienteClaude.beta.messages.parse({
+    model: MODELO_CLAUDE,
+    max_tokens: 16000,
+    betas: ['server-side-fallback-2026-07-01'],
+    fallbacks: 'default', // se o modelo recusar por segurança, a API tenta outro modelo recomendado
+    output_config: { effort: 'low', format: zodOutputFormat(Resultado) },
+    messages: [{
+      role: 'user',
+      content: [
+        { type: 'image', source: { type: 'base64', media_type: tipo as 'image/jpeg' | 'image/png' | 'image/webp', data: imagem } },
+        { type: 'text', text: PROMPT },
+      ],
+    }],
+  })
+  if (r.stop_reason === 'refusal') throw new Error('recusa: ' + (r.stop_details?.category ?? 'sem categoria'))
+  if (!r.parsed_output) throw new Error('resposta sem JSON válido (stop_reason ' + r.stop_reason + ')')
+  return r.parsed_output
 }
 
 const json = (status: number, corpo: unknown) =>
@@ -99,8 +136,8 @@ async function chamarGemini(corpo: unknown): Promise<Response | null> {
 }
 
 export async function POST(req: Request) {
-  if (!process.env.GOOGLE_SERVICE_ACCOUNT_JSON && !process.env.GEMINI_API_KEY) {
-    return json(503, { erro: 'A análise de fotos ainda não foi ativada (faltam as credenciais do Google na Vercel).' })
+  if (!process.env.ANTHROPIC_API_KEY && !process.env.GOOGLE_SERVICE_ACCOUNT_JSON && !process.env.GEMINI_API_KEY) {
+    return json(503, { erro: 'A análise de fotos ainda não foi ativada (falta a chave de IA na Vercel).' })
   }
 
   const token = (req.headers.get('authorization') || '').replace(/^Bearer\s+/i, '')
@@ -117,6 +154,18 @@ export async function POST(req: Request) {
   const imagem = corpo.imagem ?? ''
   const tipo = corpo.tipo ?? 'image/jpeg'
   if (!/^image\/(jpeg|png|webp)$/.test(tipo) || !imagem || imagem.length > 3_000_000) return json(400, { erro: 'Imagem inválida ou grande demais.' })
+
+  if (process.env.ANTHROPIC_API_KEY) {
+    try {
+      return json(200, { ...limpar(await analisarComClaude(imagem, tipo)), modelo: MODELO_CLAUDE })
+    } catch (e) {
+      if (e instanceof Anthropic.RateLimitError) return json(429, { erro: 'Muita gente analisando fotos agora. Tente de novo em instantes.' })
+      if (e instanceof Anthropic.AuthenticationError) console.error('Claude: chave inválida')
+      else if (e instanceof Anthropic.APIError) console.error('Claude', e.status, e.message)
+      else console.error('Claude', (e as Error).message)
+      return json(502, { erro: 'A análise não funcionou agora. Tente de novo ou registre pela busca.' })
+    }
+  }
 
   let r: Response | null
   try {
@@ -135,14 +184,18 @@ export async function POST(req: Request) {
   const dados = await r.json()
   const texto = dados?.candidates?.[0]?.content?.parts?.map((p: { text?: string }) => p.text ?? '').join('') ?? ''
   try {
-    const res = JSON.parse(texto)
-    const itens = (Array.isArray(res.itens) ? res.itens : []).slice(0, 12).map((i: Record<string, unknown>) => ({
-      nome: String(i.nome ?? '').slice(0, 80), busca: String(i.busca ?? '').slice(0, 80),
-      gramas: Math.max(1, Math.min(1500, Math.round(Number(i.gramas) || 100))),
-      confianca: ['alta', 'media', 'baixa'].includes(String(i.confianca)) ? i.confianca : 'baixa',
-    }))
-    return json(200, { e_comida: !!res.e_comida, itens, observacao: String(res.observacao ?? '').slice(0, 300), modelo: MODELO })
+    return json(200, { ...limpar(JSON.parse(texto)), modelo: MODELO })
   } catch {
     return json(502, { erro: 'Não entendi a resposta da análise. Tente outra foto.' })
   }
+}
+
+// Normaliza e limita o que volta da IA antes de entregar ao app.
+function limpar(res: Partial<TResultado> & Record<string, unknown>) {
+  const itens = (Array.isArray(res.itens) ? res.itens : []).slice(0, 12).map((i: Record<string, unknown>) => ({
+    nome: String(i.nome ?? '').slice(0, 80), busca: String(i.busca ?? '').slice(0, 80),
+    gramas: Math.max(1, Math.min(1500, Math.round(Number(i.gramas) || 100))),
+    confianca: ['alta', 'media', 'baixa'].includes(String(i.confianca)) ? i.confianca : 'baixa',
+  }))
+  return { e_comida: !!res.e_comida, itens, observacao: String(res.observacao ?? '').slice(0, 300) }
 }

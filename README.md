@@ -82,7 +82,7 @@ src/admin/Admin.tsx         painel administrativo
   histórico de consentimentos (`consentimentos`) e exclusão da conta com todos os dados (`apagar_minha_conta`).
 - **Código de barras**: câmera (BarcodeDetector ou zxing no iPhone) ou digitado; dados e alérgenos do rótulo pelo
   Open Food Facts (ODbL), consultados produto a produto.
-- **Foto do prato** (`api/analisar-prato.ts`): função da Vercel que chama o Gemini. Exige conta e consentimento,
+- **Foto do prato** (`api/analisar-prato.ts`): função da Vercel que chama o Claude (Anthropic), com Gemini como alternativa. Exige conta e consentimento,
   limita 20 fotos/hora por pessoa e não guarda a foto. A IA só identifica os alimentos e estima gramas; os valores
   nutricionais vêm da TACO/TBCA e a pessoa revisa antes de salvar.
 - **Painel da equipe**: exige login de alguém com papel em `papeis`. E-mails em `convites_equipe` recebem o papel
@@ -94,7 +94,8 @@ src/admin/Admin.tsx         painel administrativo
 |---|---|---|
 | `.env.production` (no repositório) | `VITE_SUPABASE_URL`, `VITE_SUPABASE_PUBLISHABLE_KEY` | Valores públicos; a proteção vem das regras RLS |
 | Vercel | `SUPABASE_URL`, `SUPABASE_PUBLISHABLE_KEY` | Usadas pela função para validar o login |
-| Vercel (secreta) | `GOOGLE_SERVICE_ACCOUNT_JSON` | **Preferida**: conta de serviço com papel "Usuário da Vertex AI" |
+| Vercel (secreta) | `ANTHROPIC_API_KEY` | **Em uso**: chave da API da Anthropic (modelo em `CLAUDE_MODEL`, padrão `claude-opus-5-5`) |
+| Vercel (secreta) | `GOOGLE_SERVICE_ACCOUNT_JSON` | Alternativa: Gemini no Vertex AI (conta de serviço com papel "Usuário da Vertex AI") |
 | Vercel (secreta) | `GEMINI_API_KEY` | Alternativa: chave do Google AI Studio |
 | Vercel | `GEMINI_MODEL`, `GOOGLE_CLOUD_LOCATION` | Modelo (padrão `gemini-3.8-flash`) e região do Vertex (padrão `global`) |
 

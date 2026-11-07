@@ -80,7 +80,7 @@ export function Perfil() {
 
       <div className="card">
         <h3 style={{ marginBottom: 4 }}>Privacidade</h3>
-        <label className="toggle"><span>Sugestões por IA<br /><span className="tiny">Permite enviar a foto do prato para análise pelo Gemini (Google). A foto não fica guardada.</span></span><input type="checkbox" className="switch" checked={!!consent?.ia} onChange={e => { const v = e.target.checked; atualizar(s => ({ ...s, consentimento: { ...s.consentimento!, ia: v } })); registrarConsentimento('ia', v) }} /></label>
+        <label className="toggle"><span>Sugestões por IA<br /><span className="tiny">Permite enviar a foto do prato para análise pelo Claude (Anthropic). A foto não fica guardada.</span></span><input type="checkbox" className="switch" checked={!!consent?.ia} onChange={e => { const v = e.target.checked; atualizar(s => ({ ...s, consentimento: { ...s.consentimento!, ia: v } })); registrarConsentimento('ia', v) }} /></label>
         <label className="toggle"><span>Novidades e ofertas</span><input type="checkbox" className="switch" checked={!!consent?.novidades} onChange={e => { const v = e.target.checked; atualizar(s => ({ ...s, consentimento: { ...s.consentimento!, novidades: v } })); registrarConsentimento('novidades', v) }} /></label>
         <p className="tiny" style={{ margin: '10px 0' }}>Seus dados ficam neste aparelho e, se você tiver conta, também na nuvem (Supabase, servidores em São Paulo). Termos aceitos em {consent?.termos ? new Date(consent.termos).toLocaleDateString('pt-BR') : '—'}.</p>
         <div className="row wrap" style={{ gap: 8 }}>
