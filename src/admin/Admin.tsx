@@ -1,6 +1,9 @@
-import { useMemo, useState } from 'react'
+import { useEffect, useMemo, useState } from 'react'
 import { ArrowLeft, Database, LayoutDashboard, ListChecks, MessageCircle, Plus, Rocket, Trash2, UtensilsCrossed } from 'lucide-react'
-import { Folha, fmt, useAlimentos } from '../components/ui'
+import { Folha, avisar, Avisos, fmt, useAlimentos } from '../components/ui'
+import { FormularioLink } from '../components/Conta'
+import { carregarAlimentosEquipe, excluirAlimentoEquipe, publicarConteudo, salvarAlimentoEquipe, usePapel } from '../lib/equipe'
+import { supabase, useSessao } from '../lib/supabase'
 import { Mascot } from '../components/Mascot'
 import { MODELOS, RECEITAS } from '../data/cardapio'
 import { alergenosEstimados, ALERGENOS } from '../lib/alergias'
@@ -17,7 +20,32 @@ const ABAS: { id: Aba; nome: string; icone: typeof Database }[] = [
   { id: 'roadmap', nome: 'Próximos módulos', icone: Rocket },
 ]
 
+// Com o servidor ligado, o painel exige login de alguém da equipe (papel definido no banco).
 export function Admin() {
+  const sessao = useSessao()
+  const { carregando, papel } = usePapel()
+  useEffect(() => { if (papel) carregarAlimentosEquipe().catch(() => {}) }, [papel])
+  if (!supabase) return <PainelAdmin modo="local" />
+  if (carregando) return <div className="onb"><div className="empty"><Mascot size={80} humor="pensativo" />Verificando acesso…</div></div>
+  if (!sessao || !papel) return (
+    <div className="onb">
+      <div className="row"><Mascot size={60} animado={false} /><div className="marca">Papa <b>Prato</b> · equipe</div></div>
+      <div className="card stack">
+        <h2>Painel administrativo</h2>
+        {!sessao ? (
+          <><p className="muted small">Entre com o e-mail da equipe. Se o seu e-mail estiver convidado, o acesso libera na hora.</p>
+            <FormularioLink textoBotao="Enviar link de acesso" aoEnviar={() => { try { localStorage.setItem('papa-prato:voltar-admin', '1') } catch { /* ok */ } }} /></>
+        ) : (
+          <p className="small">Você entrou como <b>{sessao.user.email}</b>, mas esse e-mail não faz parte da equipe. Peça a um administrador para te convidar.</p>
+        )}
+      </div>
+      <a className="btn ghost block" href="#" style={{ textDecoration: 'none' }}><ArrowLeft size={18} /> Voltar ao app</a>
+    </div>
+  )
+  return <PainelAdmin modo="servidor" />
+}
+
+function PainelAdmin({ modo }: { modo: 'local' | 'servidor' }) {
   const [aba, setAba] = useState<Aba>('painel')
   return (
     <div className="adm">
@@ -28,6 +56,7 @@ export function Admin() {
           {ABAS.map(a => <button key={a.id} aria-current={aba === a.id ? 'page' : undefined} onClick={() => setAba(a.id)}><a.icone size={17} /> {a.nome}</button>)}
           <button onClick={() => { location.hash = '' }}><ArrowLeft size={17} /> Voltar ao app</button>
         </nav>
+        <p className="tiny" style={{ color: '#B9D9C8', marginTop: 18 }}>{modo === 'servidor' ? 'Alterações salvas no servidor e publicadas para todos.' : 'Modo local: alterações valem só neste aparelho.'}</p>
       </aside>
       <main className="stack" style={{ gap: 20 }}>
         {aba === 'painel' && <Painel />}
@@ -36,6 +65,7 @@ export function Admin() {
         {aba === 'conteudo' && <Conteudo />}
         {aba === 'roadmap' && <Roadmap />}
       </main>
+      <Avisos />
     </div>
   )
 }
@@ -128,9 +158,20 @@ function EditarAlimento({ item, onFechar }: { item: AlimentoPersonalizado | null
   if (item && f?.id !== item.id) setF(item)
   if (!item || !f) return null
   const existe = obterEstado().alimentosPersonalizados.some(p => p.id === f.id)
-  const salvar = (publicado: boolean) => {
+  const salvar = async (publicado: boolean) => {
     const pronto = { ...f, publicado, atualizadoEm: new Date().toISOString() }
-    atualizar(e => ({ ...e, alimentosPersonalizados: existe ? e.alimentosPersonalizados.map(p => p.id === f.id ? pronto : p) : [...e.alimentosPersonalizados, pronto] }))
+    if (supabase) {
+      try { await salvarAlimentoEquipe(pronto); avisar(publicado ? 'Publicado para todos.' : 'Rascunho salvo.') }
+      catch (e) { avisar('Não foi possível salvar: ' + (e as Error).message); return }
+    } else {
+      atualizar(e => ({ ...e, alimentosPersonalizados: existe ? e.alimentosPersonalizados.map(p => p.id === f.id ? pronto : p) : [...e.alimentosPersonalizados, pronto] }))
+    }
+    setF(null); onFechar()
+  }
+  const excluir = async () => {
+    if (supabase) {
+      try { await excluirAlimentoEquipe(f.id) } catch (e) { avisar('Não foi possível excluir: ' + (e as Error).message); return }
+    } else atualizar(e => ({ ...e, alimentosPersonalizados: e.alimentosPersonalizados.filter(p => p.id !== f.id) }))
     setF(null); onFechar()
   }
   const numero = (k: 'kcal' | 'proteina' | 'carboidrato' | 'gordura') => (
@@ -152,7 +193,7 @@ function EditarAlimento({ item, onFechar }: { item: AlimentoPersonalizado | null
           <button className="btn ghost grow" onClick={() => salvar(false)} disabled={!f.nome.trim()}>Salvar rascunho</button>
           <button className="btn grow" onClick={() => salvar(true)} disabled={!f.nome.trim() || f.kcal <= 0}>Publicar</button>
         </div>
-        {existe && <button className="btn danger" onClick={() => { atualizar(e => ({ ...e, alimentosPersonalizados: e.alimentosPersonalizados.filter(p => p.id !== f.id) })); setF(null); onFechar() }}><Trash2 size={16} /> Excluir</button>}
+        {existe && <button className="btn danger" onClick={excluir}><Trash2 size={16} /> Excluir</button>}
       </div>
     </Folha>
   )
@@ -190,7 +231,7 @@ function Conteudo() {
   const set = (m: Partial<typeof c>) => atualizar(e => ({ ...e, conteudo: { ...e.conteudo, ...m } }))
   return (
     <>
-      <Cabecalho titulo="Conteúdo do mascote" texto="Saudações e dicas que o Papa mostra na tela inicial. As alterações valem na hora neste aparelho." />
+      <Cabecalho titulo="Conteúdo do mascote" texto="Saudações e dicas que o Papa mostra na tela inicial. Edite e veja a prévia; depois toque em Publicar para todos." />
       <div className="row wrap" style={{ alignItems: 'flex-start', gap: 20 }}>
         <div className="card stack grow" style={{ minWidth: 300 }}>
           <h3>Saudações</h3>
@@ -203,6 +244,7 @@ function Conteudo() {
           ))}</div>
           <div className="row"><input className="input grow" value={nova} onChange={e => setNova(e.target.value)} placeholder="Nova dica…" /><button className="btn sm" disabled={!nova.trim()} onClick={() => { set({ dicas: [...c.dicas, nova.trim()] }); setNova('') }}>Adicionar</button></div>
           <button className="link" onClick={() => set({ dicas: DICAS_PADRAO })}>Restaurar dicas padrão</button>
+          {supabase && <button className="btn" onClick={async () => { try { await publicarConteudo(); avisar('Conteúdo publicado para todos.') } catch (e) { avisar('Não foi possível publicar: ' + (e as Error).message) } }}>Publicar para todos</button>}
         </div>
         <div className="card stack" style={{ width: 300 }}>
           <h3>Pré-visualização</h3>
@@ -231,7 +273,7 @@ function Roadmap() {
     <>
       <Cabecalho titulo="Próximos módulos" texto="Do projeto original de 14 módulos, estes dependem de servidor, contas e autenticação. Ficam para a fase 2." />
       <div className="kpis">{itens.map(i => <div key={i.id} className="kpi stack" style={{ gap: 6 }}><span className="tag gray" style={{ width: 'fit-content' }}>{i.id}</span><b>{i.nome}</b><small>{i.o}</small></div>)}</div>
-      <div className="card row"><ListChecks /><p className="small">Já funcionando nesta versão: A01 Painel (local), A03 Alimentos, A05 Cardápios (verificação), A06 Conteúdo do mascote.</p></div>
+      <div className="card row"><ListChecks /><p className="small">Já funcionando: A01 Painel, A03 Alimentos (no servidor), A05 Cardápios (verificação), A06 Conteúdo do mascote (no servidor), A09 Privacidade (consentimentos registrados e exclusão de conta), A10 IA (foto do prato), A14 papéis de equipe.</p></div>
     </>
   )
 }

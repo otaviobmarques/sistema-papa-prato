@@ -1,6 +1,8 @@
 import { useState } from 'react'
 import { Download, LayoutDashboard, Trash2 } from 'lucide-react'
 import { Folha, fmt } from '../components/ui'
+import { CartaoConta } from '../components/Conta'
+import { registrarConsentimento } from '../lib/sync'
 import { Mascot } from '../components/Mascot'
 import { ALERGENOS, type Alergeno } from '../lib/alergias'
 import { calcularMetas } from '../lib/metas'
@@ -34,6 +36,8 @@ export function Perfil() {
   return (
     <div className="stack">
       <div className="row"><Mascot size={70} /><div><h1>{perfil.apelido}</h1><p className="small muted">Desde {new Date(perfil.criadoEm).toLocaleDateString('pt-BR')}</p></div></div>
+
+      <CartaoConta />
 
       <div className="card stack">
         <h3>Suas metas</h3>
@@ -76,9 +80,9 @@ export function Perfil() {
 
       <div className="card">
         <h3 style={{ marginBottom: 4 }}>Privacidade</h3>
-        <label className="toggle"><span>Sugestões por IA<br /><span className="tiny">Ainda não usamos IA. Quando houver, só com sua permissão.</span></span><input type="checkbox" className="switch" checked={!!consent?.ia} onChange={e => atualizar(s => ({ ...s, consentimento: { ...s.consentimento!, ia: e.target.checked } }))} /></label>
-        <label className="toggle"><span>Novidades e ofertas</span><input type="checkbox" className="switch" checked={!!consent?.novidades} onChange={e => atualizar(s => ({ ...s, consentimento: { ...s.consentimento!, novidades: e.target.checked } }))} /></label>
-        <p className="tiny" style={{ margin: '10px 0' }}>Nesta versão, seus dados ficam apenas neste aparelho. Termos aceitos em {consent?.termos ? new Date(consent.termos).toLocaleDateString('pt-BR') : '—'}.</p>
+        <label className="toggle"><span>Sugestões por IA<br /><span className="tiny">Permite enviar a foto do prato para análise pelo Gemini (Google). A foto não fica guardada.</span></span><input type="checkbox" className="switch" checked={!!consent?.ia} onChange={e => { const v = e.target.checked; atualizar(s => ({ ...s, consentimento: { ...s.consentimento!, ia: v } })); registrarConsentimento('ia', v) }} /></label>
+        <label className="toggle"><span>Novidades e ofertas</span><input type="checkbox" className="switch" checked={!!consent?.novidades} onChange={e => { const v = e.target.checked; atualizar(s => ({ ...s, consentimento: { ...s.consentimento!, novidades: v } })); registrarConsentimento('novidades', v) }} /></label>
+        <p className="tiny" style={{ margin: '10px 0' }}>Seus dados ficam neste aparelho e, se você tiver conta, também na nuvem (Supabase, servidores em São Paulo). Termos aceitos em {consent?.termos ? new Date(consent.termos).toLocaleDateString('pt-BR') : '—'}.</p>
         <div className="row wrap" style={{ gap: 8 }}>
           <button className="btn ghost sm" onClick={exportar}><Download size={16} /> Baixar meus dados</button>
           <button className="btn danger sm" onClick={() => setConfirmar(true)}><Trash2 size={16} /> Apagar tudo</button>
