@@ -3,8 +3,10 @@ import { createRoot } from 'react-dom/client'
 import { App } from './App'
 import './styles.css'
 import { iniciarSincronizacao } from './lib/sync'
+import { iniciarInstalacao } from './lib/instalar'
 
 iniciarSincronizacao()
+iniciarInstalacao()
 
 createRoot(document.getElementById('root')!).render(<StrictMode><App /></StrictMode>)
 

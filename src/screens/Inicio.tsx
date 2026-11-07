@@ -2,6 +2,7 @@ import { useMemo } from 'react'
 import { ChevronRight, Droplet, Flame, Undo2 } from 'lucide-react'
 import { Anel, Macro, fmt, useAlimentos } from '../components/ui'
 import { Mascot } from '../components/Mascot'
+import { FaixaInstalar } from '../components/Instalar'
 import { somar, nomeCurto } from '../lib/alimentos'
 import { calcularMetas } from '../lib/metas'
 import { planoDoDia } from '../lib/plano'
@@ -47,6 +48,8 @@ export function Inicio({ irPara, adicionar }: { irPara: (t: string) => void; adi
           <p className="muted small">{fala}</p>
         </div>
       </div>
+
+      <FaixaInstalar />
 
       <div className="card">
         <div className="row" style={{ gap: 18 }}>
