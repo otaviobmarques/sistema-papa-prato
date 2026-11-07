@@ -71,7 +71,7 @@ async function render(page, w, h, body, arquivo, { transparente = false } = {}) 
     <div style="position:absolute;left:72px;top:170px;width:620px;font:600 64px/1.04 Fredoka,sans-serif;color:${VERDE};letter-spacing:-1px">Comer bem com <span style="color:${BARRO}">arroz e feijão</span> e zero complicação.</div>
     <div style="position:absolute;left:72px;top:418px;width:560px;font:500 25px/1.4 Inter,sans-serif;color:#55645B">Cardápio da semana, foto do prato e 18 mil alimentos brasileiros.</div>
     <div style="position:absolute;left:72px;top:512px;display:flex;gap:12px">
-      <span style="background:${BARRO};color:#fff;font:600 22px/1 Inter,sans-serif;padding:16px 26px;border-radius:999px">Comece grátis</span>
+      <span style="background:${BARRO};color:#fff;font:600 22px/1 Inter,sans-serif;padding:16px 26px;border-radius:999px">Teste 7 dias grátis</span>
       <span style="background:#fff;color:${VERDE};font:600 22px/1 Inter,sans-serif;padding:16px 22px;border-radius:999px;box-shadow:inset 0 0 0 2px #F0E1CE">No celular, sem baixar nada</span>
     </div>
     <div style="position:absolute;left:790px;top:46px;width:300px;padding:10px;border-radius:44px;background:#111;transform:rotate(-5deg);box-shadow:0 30px 60px -20px rgba(60,35,15,.45)">

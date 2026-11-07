@@ -50,7 +50,7 @@ export function CartaoConta() {
   if (!sessao) return (
     <div className="card stack">
       <h3 className="row" style={{ gap: 8 }}><CloudOff size={18} /> Sua conta</h3>
-      <p className="small muted">Crie uma conta grátis para guardar seu diário na nuvem, usar em mais de um aparelho e liberar a foto do prato com IA.</p>
+      <p className="small muted">Crie sua conta para guardar seu diário na nuvem, usar em mais de um aparelho e liberar a foto do prato com IA.</p>
       <FormularioLink textoBotao="Criar conta ou entrar" />
     </div>
   )
