@@ -333,14 +333,13 @@ function Roadmap() {
   const itens: { id: string; nome: string; o: string }[] = [
     { id: 'Ir ao ar', nome: 'Cobrar de verdade', o: 'Trocar ASAAS_AMBIENTE para producao na Vercel e gerar chaves novas do Asaas.' },
     { id: 'Domínio', nome: 'Endereço próprio', o: 'Ligar o domínio comprado na Vercel e atualizar os links do site e do Supabase.' },
-    { id: 'Ideia', nome: 'Lembretes no celular', o: 'Notificações de água e refeições (push no Android e no iPhone instalado).' },
     { id: 'Ideia', nome: 'Profissionais pagos', o: 'Plano para nutricionistas com mais pacientes, prescrição de cardápio e relatórios em PDF.' },
   ]
   return (
     <>
       <Cabecalho titulo="Próximos passos" texto="Todos os módulos do projeto original estão funcionando. Sugestões para a próxima fase." />
       <div className="kpis">{itens.map(i => <div key={i.id} className="kpi stack" style={{ gap: 6 }}><span className="tag gray" style={{ width: 'fit-content' }}>{i.id}</span><b>{i.nome}</b><small>{i.o}</small></div>)}</div>
-      <div className="card row"><ListChecks /><p className="small">Já funcionando: A01 Painel, A02 Usuários, A03 Alimentos, A04 Receitas, A05 Cardápios (com simulação por perfil), A06 Conteúdo do mascote, A08 Suporte, A07 Assinaturas, A09 Privacidade, A10 IA, A13 Saúde do sistema, A11 Gamificação, A12 Profissionais, A14 Equipe e segurança e a Conversa com o Papa (T34).</p></div>
+      <div className="card row"><ListChecks /><p className="small">Já funcionando: A01 Painel, A02 Usuários, A03 Alimentos, A04 Receitas, A05 Cardápios (com simulação por perfil), A06 Conteúdo do mascote, A08 Suporte, A07 Assinaturas, A09 Privacidade, A10 IA, A13 Saúde do sistema, A11 Gamificação, A12 Profissionais, Lembretes no celular, A14 Equipe e segurança e a Conversa com o Papa (T34).</p></div>
     </>
   )
 }
