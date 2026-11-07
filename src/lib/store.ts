@@ -16,6 +16,7 @@ export type Registro = {
   id: string; alimentoId: string; nome: string; fonte: Fonte
   gramas: number; medida?: string; qtd?: number
   refeicao: Refeicao; hora: string
+  criadoEm?: string // quando foi registrado (campanhas só contam registros do próprio dia)
   n: Nutrientes // guardado no momento do registro: o diário não muda se a base for atualizada
 }
 export type Dia = { registros: Registro[]; agua: number[]; atualizadoEm?: string }
@@ -42,6 +43,10 @@ export type Produto = {
   porcao?: { nome: string; gramas: number }; alergenos: string[]; imagem?: string
 }
 
+// Conquista ou campanha criada pela equipe no painel (A11). Com início/fim, é campanha.
+export type MetricaConquista = 'registros' | 'dias_registrados' | 'sequencia' | 'dias_completos' | 'dias_agua' | 'alimentos_diferentes' | 'contem_alimento'
+export type ConquistaEquipe = { id: string; emoji: string; nome: string; criterio: string; metrica: MetricaConquista; alvo: number; termos: string[]; inicio: string | null; fim: string | null; ordem: number }
+
 export type Estado = {
   versao: 1
   perfil: Perfil | null
@@ -59,6 +64,7 @@ export type Estado = {
   // Cardápio e receitas publicados pela equipe (vêm do servidor; sem conexão, valem os do código)
   modelosEquipe?: Modelo[]
   receitasEquipe?: Receita[]
+  conquistasEquipe?: ConquistaEquipe[]
   atualizadoEm?: string // última mudança nos campos sincronizados (fora os dias)
 }
 
@@ -154,7 +160,7 @@ export function registrar(data: string, r: Omit<Registro, 'id' | 'hora'>) {
   const hora = new Date().toTimeString().slice(0, 5)
   atualizar(e => {
     const dia = e.dias[data] ?? diaVazio()
-    return { ...e, dias: { ...e.dias, [data]: { ...dia, registros: [...dia.registros, { ...r, id: uid(), hora }] } } }
+    return { ...e, dias: { ...e.dias, [data]: { ...dia, registros: [...dia.registros, { ...r, id: uid(), hora, criadoEm: new Date().toISOString() }] } } }
   })
 }
 export function removerRegistro(data: string, id: string) {
