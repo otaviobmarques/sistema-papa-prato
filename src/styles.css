@@ -230,3 +230,5 @@ textarea.input { min-height: 90px; resize: vertical; }
 .item-ia { display: grid; gap: 8px; padding: 12px 0; border-bottom: 1px solid var(--line); }
 .item-ia:last-child { border-bottom: 0; }
 .item-ia select { width: 100%; }
+
+.assinatura { display: flex; align-items: center; gap: 8px; font-size: .72rem; text-decoration: none; flex-wrap: wrap; }

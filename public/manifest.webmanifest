@@ -2,7 +2,7 @@
   "name": "Papa Prato",
   "short_name": "Papa Prato",
   "description": "Dietas e programas alimentares",
-  "start_url": "./",
+  "start_url": "/app/", "scope": "/",
   "display": "standalone",
   "background_color": "#FFF5EC",
   "theme_color": "#FFF5EC",

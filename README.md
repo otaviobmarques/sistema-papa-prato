@@ -5,7 +5,8 @@ Dietas e programas alimentares com comida brasileira de verdade, com a couve-flo
 App web instalável no celular (PWA), "local primeiro": tudo funciona no aparelho, e quem cria conta
 tem o diário sincronizado na nuvem.
 
-- Produção: https://papa-prato.vercel.app (deploy automático a cada push na `main`)
+- Site de vendas: https://papa-prato.vercel.app (`index.html`, HTML e CSS sem framework)
+- App: https://papa-prato.vercel.app/app/ (`app/index.html` + `src/`); deploy automático a cada push na `main`
 - Banco e contas: Supabase, projeto `papa-prato` (São Paulo, sa-east-1)
 
 ## Rodar
@@ -16,7 +17,7 @@ npm run dev          # desenvolvimento em http://localhost:5173
 npm run build        # versão de produção em dist/
 ```
 
-Painel administrativo: abra o app com `#admin` no fim do endereço, ou vá em Perfil → Painel administrativo.
+Painel administrativo: abra `/app/#admin`, ou vá em Perfil → Painel administrativo.
 Com o servidor ligado, ele pede login de alguém da equipe.
 
 ## O que já funciona
@@ -43,6 +44,12 @@ Com o servidor ligado, ele pede login de alguém da equipe.
 - A06 Conteúdo do mascote: saudações e dicas editáveis, com pré-visualização dos humores.
 - Os demais módulos (usuários, assinaturas, suporte, LGPD, IA, profissionais, observabilidade, configuração)
   dependem de servidor e ficam para a fase 2.
+
+## Site de vendas
+
+`index.html` na raiz, com as telas reais do app em `public/site/telas/` (capturas em 390×664, WebP).
+Links antigos para a raiz com `#admin` ou retorno de login são enviados para `/app/`.
+Créditos: sistema da Domma Tecnologia; site desenvolvido pela Agência RedBox.
 
 ## Base de alimentos
 

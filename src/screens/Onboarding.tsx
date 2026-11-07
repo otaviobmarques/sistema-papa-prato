@@ -2,6 +2,7 @@ import { useState } from 'react'
 import { ArrowLeft, ShieldCheck } from 'lucide-react'
 import { Mascot } from '../components/Mascot'
 import { FormularioLink, contasDisponiveis } from '../components/Conta'
+import { Assinatura } from '../components/Assinatura'
 import { Folha, fmt } from '../components/ui'
 import { ALERGENOS, type Alergeno } from '../lib/alergias'
 import { calcularMetas } from '../lib/metas'
@@ -173,6 +174,7 @@ export function Onboarding() {
       {passo === 0 && (contasDisponiveis
         ? <button className="btn ghost block" onClick={() => setEntrar(true)}>Já tenho conta</button>
         : <p className="tiny" style={{ textAlign: 'center' }}>Sem cadastro: seus dados ficam neste aparelho.</p>)}
+      {passo === 0 && <Assinatura centro />}
       <Folha aberta={entrar} onFechar={() => setEntrar(false)} titulo="Entrar na sua conta">
         <FormularioLink textoBotao="Enviar link de acesso" />
       </Folha>
