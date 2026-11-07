@@ -1,10 +1,12 @@
 import { useState } from 'react'
 import { ArrowLeft, ShieldCheck } from 'lucide-react'
 import { Mascot } from '../components/Mascot'
-import { fmt } from '../components/ui'
+import { FormularioLink, contasDisponiveis } from '../components/Conta'
+import { Folha, fmt } from '../components/ui'
 import { ALERGENOS, type Alergeno } from '../lib/alergias'
 import { calcularMetas } from '../lib/metas'
 import { atualizar, type Perfil } from '../lib/store'
+import { registrarConsentimentos } from '../lib/sync'
 
 const OBJETIVOS = [
   { id: 'comer-melhor', emoji: '🥗', nome: 'Comer melhor' },
@@ -22,6 +24,7 @@ const TOTAL = 9
 
 export function Onboarding() {
   const [passo, setPasso] = useState(0)
+  const [entrar, setEntrar] = useState(false)
   const [consent, setConsent] = useState({ termos: false, ia: false, novidades: false })
   const [p, setP] = useState<Perfil>({
     apelido: '', objetivo: 'comer-melhor', atividade: 'leve', dieta: 'onivoro', alergias: [], naoGosta: '', gostos: [],
@@ -35,6 +38,7 @@ export function Onboarding() {
   const avancar = () => {
     if (passo < TOTAL - 1) return setPasso(passo + 1)
     atualizar(e => ({ ...e, perfil: { ...p, apelido: p.apelido.trim() || 'você' }, consentimento: { ...consent, termos: new Date().toISOString() } }))
+    registrarConsentimentos().catch(() => {}) // histórico (LGPD), se houver conta
   }
 
   const fala: Record<number, string> = {
@@ -74,9 +78,9 @@ export function Onboarding() {
           <div className="stack">
             <h1>Sua privacidade</h1>
             <label className="check-card"><input type="checkbox" checked={consent.termos} onChange={e => setConsent({ ...consent, termos: e.target.checked })} />
-              <span><b>Aceito os termos de uso e a política de privacidade</b><br /><span className="small muted">Obrigatório. Nesta versão, tudo fica salvo só neste aparelho.</span></span></label>
+              <span><b>Aceito os termos de uso e a política de privacidade</b><br /><span className="small muted">Obrigatório. Seus dados ficam no aparelho; com conta, também na nuvem.</span></span></label>
             <label className="check-card"><input type="checkbox" checked={consent.ia} onChange={e => setConsent({ ...consent, ia: e.target.checked })} />
-              <span><b>Sugestões personalizadas por IA</b> <span className="tag gray">opcional</span><br /><span className="small muted">Quando a IA chegar, ela só usa seus dados se você permitir.</span></span></label>
+              <span><b>Sugestões personalizadas por IA</b> <span className="tag gray">opcional</span><br /><span className="small muted">Permite analisar fotos do prato com o Gemini (Google). Você pode mudar depois.</span></span></label>
             <label className="check-card"><input type="checkbox" checked={consent.novidades} onChange={e => setConsent({ ...consent, novidades: e.target.checked })} />
               <span><b>Novidades e ofertas</b> <span className="tag gray">opcional</span></span></label>
             <p className="tiny row"><ShieldCheck size={14} /> Você pode revisar essas escolhas em Perfil → Privacidade.</p>
@@ -166,7 +170,12 @@ export function Onboarding() {
       <button className="btn block" onClick={avancar} disabled={!podeAvancar}>
         {passo === 0 ? 'Começar' : passo === TOTAL - 1 ? 'Ver meu primeiro cardápio' : 'Continuar'}
       </button>
-      {passo === 0 && <p className="tiny" style={{ textAlign: 'center' }}>Sem cadastro: seus dados ficam neste aparelho.</p>}
+      {passo === 0 && (contasDisponiveis
+        ? <button className="btn ghost block" onClick={() => setEntrar(true)}>Já tenho conta</button>
+        : <p className="tiny" style={{ textAlign: 'center' }}>Sem cadastro: seus dados ficam neste aparelho.</p>)}
+      <Folha aberta={entrar} onFechar={() => setEntrar(false)} titulo="Entrar na sua conta">
+        <FormularioLink textoBotao="Enviar link de acesso" />
+      </Folha>
     </div>
   )
 }

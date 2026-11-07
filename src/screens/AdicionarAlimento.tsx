@@ -1,10 +1,16 @@
 import { useEffect, useMemo, useRef, useState } from 'react'
-import { AlertTriangle, ArrowLeft, Minus, Plus, Search } from 'lucide-react'
+import { AlertTriangle, ArrowLeft, Camera, Minus, Plus, ScanBarcode, Search } from 'lucide-react'
+import { LeitorCodigo } from '../components/LeitorCodigo'
+import { FotoPrato } from '../components/FotoPrato'
+import { produtoParaAlimento } from '../lib/produtos'
 import { Folha, avisar, fmt, useAlimentos } from '../components/ui'
 import { Mascot } from '../components/Mascot'
 import { ALERGENOS, alergenosEstimados } from '../lib/alergias'
-import { buscar, nomeCurto, nutrientesDe, NOME_FONTE, type Alimento } from '../lib/alimentos'
+import { buscar, nomeCurto, nutrientesDe, CITACAO_OFF, NOME_FONTE, type Alimento } from '../lib/alimentos'
+import type { Alergeno } from '../lib/alergias'
 import { REFEICOES, registrar, removerRegistro, obterEstado, useEstado, type Refeicao } from '../lib/store'
+
+const alergenosDe = (a: Alimento): Alergeno[] => (a.alergenosRotulo as Alergeno[] | undefined) ?? alergenosEstimados(a.nome)
 
 export function refeicaoAgora(): Refeicao {
   const h = new Date().getHours()
@@ -15,8 +21,9 @@ export function AdicionarAlimento({ aberta, onFechar, data, refeicaoInicial }: {
   const base = useAlimentos()
   const [q, setQ] = useState('')
   const [sel, setSel] = useState<Alimento | null>(null)
+  const [modo, setModo] = useState<'busca' | 'codigo' | 'foto'>('busca')
   const ref = useRef<HTMLInputElement>(null)
-  useEffect(() => { if (aberta) { setQ(''); setSel(null); setTimeout(() => ref.current?.focus(), 250) } }, [aberta])
+  useEffect(() => { if (aberta) { setQ(''); setSel(null); setModo('busca'); setTimeout(() => ref.current?.focus(), 250) } }, [aberta])
 
   const dias = useEstado(e => e.dias)
   const recentes = useMemo(() => {
@@ -32,15 +39,25 @@ export function AdicionarAlimento({ aberta, onFechar, data, refeicaoInicial }: {
   const resultados = useMemo(() => (base.pronto ? buscar(base.lista, q) : []), [q, base.pronto, base.pronto && base.lista])
 
   return (
-    <Folha aberta={aberta} onFechar={onFechar} titulo={sel ? undefined : 'O que você comeu?'} cheia>
+    <Folha aberta={aberta} onFechar={onFechar} titulo={sel || modo !== 'busca' ? undefined : 'O que você comeu?'} cheia>
       {sel && base.pronto ? (
-        <Porcao alimento={sel} citacao={base.citacao[sel.fonte]} data={data} refeicaoInicial={refeicaoInicial ?? refeicaoAgora()} onVoltar={() => setSel(null)} onPronto={onFechar} />
+        <Porcao alimento={sel} citacao={sel.fonte === 'OFF' ? CITACAO_OFF : base.citacao[sel.fonte]} data={data} refeicaoInicial={refeicaoInicial ?? refeicaoAgora()} onVoltar={() => setSel(null)} onPronto={onFechar} />
+      ) : modo === 'codigo' ? (
+        <LeitorCodigo onVoltar={() => setModo('busca')} onProduto={p => setSel(produtoParaAlimento(p))} />
+      ) : modo === 'foto' && base.pronto ? (
+        <FotoPrato lista={base.lista} data={data} refeicaoInicial={refeicaoInicial ?? refeicaoAgora()} onVoltar={() => setModo('busca')} onPronto={onFechar} />
       ) : (
         <div className="stack">
           <div className="search">
             <Search size={18} />
             <input ref={ref} className="input" value={q} onChange={e => setQ(e.target.value)} placeholder="Buscar: arroz, feijão, cuscuz…" aria-label="Buscar alimento" />
           </div>
+          {q.trim() === '' && (
+            <div className="atalhos">
+              <button className="atalho" onClick={() => setModo('codigo')}><ScanBarcode size={22} /> Código de barras</button>
+              <button className="atalho" onClick={() => setModo('foto')}><Camera size={22} /> Foto do prato</button>
+            </div>
+          )}
           {!base.pronto ? (
             <div className="empty">{base.erro ? <>😕 {base.erro}</> : <><Mascot size={70} humor="pensativo" />Carregando 18 mil alimentos…</>}</div>
           ) : q.trim() === '' ? (
@@ -65,7 +82,7 @@ function Lista({ itens, onEscolher }: { itens: Alimento[]; onEscolher: (a: Alime
   return (
     <div className="list">
       {itens.map(a => {
-        const alerta = alergenosEstimados(a.nome).filter(x => alergias.includes(x))
+        const alerta = alergenosDe(a).filter(x => alergias.includes(x))
         return (
           <button key={a.id} className="item-btn" onClick={() => onEscolher(a)}>
             <div className="grow">
@@ -94,7 +111,7 @@ function Porcao({ alimento: a, citacao, data, refeicaoInicial, onVoltar, onPront
   const gramas = Math.round(qtd * m.gramas * 10) / 10
   const n = nutrientesDe(a, gramas)
   const passo = emGramas ? 10 : 0.5
-  const alerta = alergenosEstimados(a.nome)
+  const alerta = alergenosDe(a)
 
   const adicionar = () => {
     registrar(data, { alimentoId: a.id, nome: a.nome, fonte: a.fonte, gramas, medida: emGramas ? undefined : m.nome, qtd: emGramas ? undefined : qtd, refeicao, n })
@@ -108,13 +125,13 @@ function Porcao({ alimento: a, citacao, data, refeicaoInicial, onVoltar, onPront
       <button className="link row" onClick={onVoltar} style={{ gap: 6 }}><ArrowLeft size={18} /> Voltar à busca</button>
       <div>
         <h2>{a.nome}</h2>
-        <p className="tiny" style={{ marginTop: 4 }}>Fonte: {a.personalizado ? 'cadastrado pela equipe Papa Prato' : NOME_FONTE[a.fonte]}</p>
+        <p className="tiny" style={{ marginTop: 4 }}>Fonte: {a.personalizado ? 'cadastrado pela equipe Papa Prato' : NOME_FONTE[a.fonte]}{a.fonte === 'OFF' && ` · código ${a.termos}`}</p>
       </div>
 
       {alerta.length > 0 && (
         <div className={`card ${alerta.some(x => alergias.includes(x)) ? 'peach' : 'soft'} small row`} style={{ alignItems: 'flex-start' }}>
           <AlertTriangle size={18} style={{ flex: 'none', color: 'var(--orange)' }} />
-          <span>Pode conter: <b>{alerta.map(x => ALERGENOS[x].rotulo).join(', ')}</b>. Estimativa pelo nome do alimento; confira o rótulo.</span>
+          <span>{a.alergenosRotulo ? 'Rótulo informa' : 'Pode conter'}: <b>{alerta.map(x => ALERGENOS[x].rotulo).join(', ')}</b>. {a.alergenosRotulo ? 'Dados do Open Food Facts; confira a embalagem.' : 'Estimativa pelo nome do alimento; confira o rótulo.'}</span>
         </div>
       )}
 

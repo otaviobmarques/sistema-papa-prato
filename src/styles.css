@@ -217,3 +217,16 @@ textarea.input { min-height: 90px; resize: vertical; }
 
 @media (prefers-reduced-motion: reduce) { *, *::before, *::after { animation: none !important; transition: none !important; } }
 :root[data-motion="reduced"] *, :root[data-motion="reduced"] *::before, :root[data-motion="reduced"] *::after { animation: none !important; transition: none !important; }
+
+/* leitor de código de barras e foto */
+.leitor { position: relative; border-radius: 22px; overflow: hidden; background: #0f1411; aspect-ratio: 4 / 3; max-width: 100%; display: grid; place-items: center; }
+.leitor video { width: 100%; height: 100%; object-fit: cover; }
+.leitor-mira { position: absolute; left: 12%; right: 12%; top: 38%; height: 24%; border: 3px solid var(--lime); border-radius: 14px; box-shadow: 0 0 0 999px rgba(0,0,0,.25); }
+.leitor-aviso { position: absolute; inset: 0; display: grid; place-content: center; justify-items: center; gap: 10px; color: #EEF3EF; text-align: center; padding: 20px; font-size: .9rem; }
+.atalhos { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+.atalho { border: 0; border-radius: 16px; padding: 12px; background: var(--surface); box-shadow: inset 0 0 0 1.5px var(--line); display: flex; align-items: center; gap: 10px; font-weight: 600; text-align: left; }
+.atalho svg { color: var(--green-2); flex: none; }
+.foto-previa { width: 100%; max-height: 260px; object-fit: cover; border-radius: 18px; display: block; }
+.item-ia { display: grid; gap: 8px; padding: 12px 0; border-bottom: 1px solid var(--line); }
+.item-ia:last-child { border-bottom: 0; }
+.item-ia select { width: 100%; }

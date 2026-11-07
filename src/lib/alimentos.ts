@@ -2,7 +2,7 @@ import { MODELOS, RECEITAS } from '../data/cardapio'
 
 // Base de alimentos (TACO, TBCA, POF, USDA, CoFID) gerada de fontes-ref por scripts/gerar-alimentos.py.
 // Os valores são por 100 g de parte comestível, exatamente como a fonte publica.
-export type Fonte = 'TACO' | 'TBCA' | 'POF' | 'USDA' | 'COFID'
+export type Fonte = 'TACO' | 'TBCA' | 'POF' | 'USDA' | 'COFID' | 'OFF'
 export type Medida = { nome: string; gramas: number }
 export type Alimento = {
   id: string; nome: string; fonte: Fonte
@@ -11,15 +11,18 @@ export type Alimento = {
   medidas: Medida[]; termos: string
   busca: string // nome + termos sem acento, para buscar
   personalizado?: boolean
+  alergenosRotulo?: string[] // do rótulo (Open Food Facts); quando existe, substitui a estimativa pelo nome
+  marca?: string
 }
 export type Nutrientes = { kcal: number; proteina: number; carboidrato: number; gordura: number; fibra: number }
 
 export const NOME_FONTE: Record<Fonte, string> = {
   TACO: 'TACO · NEPA/UNICAMP', TBCA: 'TBCA · USP/FoRC', POF: 'IBGE · POF 2008-2009',
-  USDA: 'USDA FoodData Central', COFID: 'CoFID 2021 (Reino Unido)',
+  USDA: 'USDA FoodData Central', COFID: 'CoFID 2021 (Reino Unido)', OFF: 'Open Food Facts (rótulo do produto)',
 }
+export const CITACAO_OFF = 'Dados do produto: Open Food Facts (openfoodfacts.org), licença ODbL. Informações enviadas por colaboradores; confira o rótulo.'
 // Ordem de preferência na busca: bases brasileiras primeiro.
-const PRIORIDADE: Record<Fonte, number> = { TACO: 0, TBCA: 1, POF: 2, USDA: 3, COFID: 4 }
+const PRIORIDADE: Record<Fonte, number> = { TACO: 0, TBCA: 1, POF: 2, USDA: 3, COFID: 4, OFF: 1 }
 
 export const semAcento = (s: string) => s.normalize('NFD').replace(/[̀-ͯ]/g, '').toLowerCase()
 

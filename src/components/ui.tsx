@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useState, type ReactNode } from 'react'
 import { X } from 'lucide-react'
 import { carregarAlimentos, baseCarregada, type Alimento } from '../lib/alimentos'
+import { produtoParaAlimento } from '../lib/produtos'
 import { useEstado, type AlimentoPersonalizado } from '../lib/store'
 
 export const fmt = (n: number, casas = 0) => n.toLocaleString('pt-BR', { maximumFractionDigits: casas, minimumFractionDigits: casas })
@@ -90,15 +91,16 @@ export function useAlimentos() {
   const [base, setBase] = useState(baseCarregada())
   const [erro, setErro] = useState<string | null>(null)
   const pers = useEstado(e => e.alimentosPersonalizados)
+  const produtos = useEstado(e => e.produtos)
   useEffect(() => { if (!base) carregarAlimentos().then(setBase).catch(e => setErro(String(e.message ?? e))) }, [base])
   const junto = useMemo(() => {
     if (!base) return null
-    const publicados = pers.filter(p => p.publicado).map(paraAlimento)
+    const publicados = [...pers.filter(p => p.publicado).map(paraAlimento), ...Object.values(produtos ?? {}).map(produtoParaAlimento)]
     if (!publicados.length) return { lista: base.lista, porId: base.porId }
     const porId = new Map(base.porId)
     publicados.forEach(p => porId.set(p.id, p))
     return { lista: [...publicados, ...base.lista], porId }
-  }, [base, pers])
+  }, [base, pers, produtos])
   if (!base || !junto) return { pronto: false as const, erro }
   return { pronto: true as const, ...junto, citacao: base.citacao, erro: null }
 }

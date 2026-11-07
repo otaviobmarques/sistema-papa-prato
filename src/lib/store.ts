@@ -17,7 +17,7 @@ export type Registro = {
   refeicao: Refeicao; hora: string
   n: Nutrientes // guardado no momento do registro: o diário não muda se a base for atualizada
 }
-export type Dia = { registros: Registro[]; agua: number[] }
+export type Dia = { registros: Registro[]; agua: number[]; atualizadoEm?: string }
 export type Objetivo = 'comer-melhor' | 'perder-peso' | 'ganhar-massa' | 'manter'
 export type Perfil = {
   apelido: string; objetivo: Objetivo
@@ -34,6 +34,12 @@ export type AlimentoPersonalizado = {
   fibra: number | null; medidas: Medida[]; publicado: boolean; atualizadoEm: string
 }
 export type Favorito = { id: string; nome: string; itens: Omit<Registro, 'id' | 'refeicao' | 'hora'>[] }
+// Produto industrializado lido pelo código de barras (Open Food Facts), guardado para reutilizar.
+export type Produto = {
+  id: string; codigo: string; nome: string; marca?: string
+  kcal: number; proteina: number; carboidrato: number; gordura: number; fibra: number | null; sodio: number | null
+  porcao?: { nome: string; gramas: number }; alergenos: string[]; imagem?: string
+}
 
 export type Estado = {
   versao: 1
@@ -48,7 +54,13 @@ export type Estado = {
   alimentosPersonalizados: AlimentoPersonalizado[]
   conteudo: { dicas: string[]; saudacoes: { manha: string; tarde: string; noite: string } }
   tourVisto: boolean
+  produtos: Record<string, Produto>
+  atualizadoEm?: string // última mudança nos campos sincronizados (fora os dias)
 }
+
+// Campos que vão para a nuvem no documento do perfil. Os dias vão em tabela própria;
+// alimentos da equipe e conteúdo do mascote vêm do servidor e não sobem daqui.
+export const CAMPOS_SINCRONIZADOS = ['perfil', 'consentimento', 'plano', 'favoritos', 'compras', 'conquistasVistas', 'ajustes', 'tourVisto', 'produtos'] as const
 
 export const DICAS_PADRAO = [
   'Metade do prato com legumes e verduras deixa tudo mais colorido e nutritivo.',
@@ -68,6 +80,7 @@ const inicial = (): Estado => ({
   alimentosPersonalizados: [],
   conteudo: { dicas: DICAS_PADRAO, saudacoes: { manha: 'Bom dia', tarde: 'Boa tarde', noite: 'Boa noite' } },
   tourVisto: false,
+  produtos: {},
 })
 
 const CHAVE = 'papa-prato:v1'
@@ -82,12 +95,34 @@ function ler(): Estado {
 let estado: Estado = ler()
 const ouvintes = new Set<() => void>()
 
-export function atualizar(fn: (e: Estado) => Estado) {
-  estado = fn(estado)
+export function atualizar(fn: (e: Estado) => Estado, opcoes: { marcar?: boolean } = {}) {
+  const antes = estado
+  let depois = fn(estado)
+  if (opcoes.marcar !== false) depois = marcarMudancas(antes, depois)
+  estado = depois
   try { localStorage.setItem(CHAVE, JSON.stringify(estado)) } catch { /* sem persistência */ }
   ouvintes.forEach(o => o())
 }
+// Carimba a hora da mudança em cada dia alterado e no documento do perfil,
+// para a sincronização saber o que é mais recente ("o mais recente vence").
+function marcarMudancas(antes: Estado, depois: Estado): Estado {
+  const agora = new Date().toISOString()
+  let dias = depois.dias
+  if (depois.dias !== antes.dias) {
+    for (const k of Object.keys(depois.dias)) {
+      if (depois.dias[k] !== antes.dias[k] && depois.dias[k].atualizadoEm === antes.dias[k]?.atualizadoEm) {
+        if (dias === depois.dias) dias = { ...depois.dias }
+        dias[k] = { ...depois.dias[k], atualizadoEm: agora }
+      }
+    }
+  }
+  const mudouPerfil = CAMPOS_SINCRONIZADOS.some(c => depois[c] !== antes[c]) && depois.atualizadoEm === antes.atualizadoEm
+  if (dias === depois.dias && !mudouPerfil) return depois
+  return { ...depois, dias, ...(mudouPerfil ? { atualizadoEm: agora } : {}) }
+}
+
 export const obterEstado = () => estado
+export function aoMudar(fn: () => void) { ouvintes.add(fn); return () => { ouvintes.delete(fn) } }
 export function apagarTudo() {
   try { localStorage.removeItem(CHAVE) } catch { /* ok */ }
   estado = inicial(); ouvintes.forEach(o => o())

@@ -6,6 +6,8 @@ import { Mascot } from './components/Mascot'
 import { CONQUISTAS, desbloqueadas } from './lib/conquistas'
 import { atualizar, hoje, obterEstado, useEstado, type Refeicao } from './lib/store'
 import { carregarAlimentos } from './lib/alimentos'
+import { carregarConteudoDaEquipe } from './lib/sync'
+import { useSessao } from './lib/supabase'
 import { AdicionarAlimento } from './screens/AdicionarAlimento'
 import { Conquistas } from './screens/Conquistas'
 import { Diario } from './screens/Diario'
@@ -38,7 +40,12 @@ export function App() {
   useAjustesNoDocumento()
   const hash = useHash()
   const perfil = useEstado(e => e.perfil)
-  useEffect(() => { carregarAlimentos().catch(() => {}) }, []) // já começa a baixar a base
+  const sessao = useSessao()
+  // Quem pediu o link pelo painel volta para o painel depois de entrar.
+  useEffect(() => {
+    try { if (sessao && localStorage.getItem('papa-prato:voltar-admin')) { localStorage.removeItem('papa-prato:voltar-admin'); location.hash = 'admin' } } catch { /* ok */ }
+  }, [sessao])
+  useEffect(() => { carregarAlimentos().catch(() => {}); carregarConteudoDaEquipe().catch(() => {}) }, []) // já começa a baixar a base
   if (hash.startsWith('#admin')) return <Admin />
   if (!perfil) return <Onboarding />
   return <AppPrincipal />
