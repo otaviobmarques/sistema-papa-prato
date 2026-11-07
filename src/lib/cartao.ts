@@ -22,7 +22,7 @@ export async function gerarCartao(c: { emoji: string; nome: string; criterio: st
   quebrar(g, c.criterio + '.', W / 2, 1025, 860, 52)
   if (sequencia > 1) { g.fillStyle = '#C2410C'; g.font = '600 42px Inter, system-ui, sans-serif'; g.fillText(`🔥 ${sequencia} dias seguidos`, W / 2, 1145) }
   g.fillStyle = '#14532D'; g.font = '700 54px Fredoka, ui-rounded, system-ui, sans-serif'; g.fillText('Papa Prato', W / 2, 1265)
-  g.fillStyle = '#55645B'; g.font = '500 30px Inter, system-ui, sans-serif'; g.fillText('papa-prato.vercel.app', W / 2, 1310)
+  g.fillStyle = '#55645B'; g.font = '500 30px Inter, system-ui, sans-serif'; g.fillText('papaprato.com.br', W / 2, 1310)
   return new Promise(res => cv.toBlob(b => res(b!), 'image/png'))
 }
 
@@ -38,7 +38,7 @@ function quebrar(g: CanvasRenderingContext2D, texto: string, x: number, y: numbe
 export async function compartilharCartao(c: { emoji: string; nome: string; criterio: string }, sequencia: number): Promise<'compartilhado' | 'baixado' | 'cancelado'> {
   const blob = await gerarCartao(c, sequencia)
   const arq = new File([blob], `conquista-${c.nome.toLowerCase().replace(/\s+/g, '-')}.png`, { type: 'image/png' })
-  const texto = `Conquistei "${c.nome}" no Papa Prato! 🥦 papa-prato.vercel.app`
+  const texto = `Conquistei "${c.nome}" no Papa Prato! 🥦 papaprato.com.br`
   if (navigator.canShare?.({ files: [arq] })) {
     try { await navigator.share({ files: [arq], text: texto, title: 'Minha conquista no Papa Prato' }); return 'compartilhado' }
     catch (e) { if ((e as Error).name === 'AbortError') return 'cancelado' }
