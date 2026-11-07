@@ -177,6 +177,7 @@ export function Onboarding() {
       {passo === 0 && <Assinatura centro />}
       <Folha aberta={entrar} onFechar={() => setEntrar(false)} titulo="Entrar na sua conta">
         <FormularioLink textoBotao="Enviar link de acesso" />
+        <a className="btn ghost block" href="#admin" style={{ textDecoration: 'none', marginTop: 14 }} onClick={() => setEntrar(false)}>Sou da equipe: entrar com usuário e senha</a>
       </Folha>
     </div>
   )
