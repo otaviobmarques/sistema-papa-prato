@@ -9,7 +9,7 @@ export type Acesso = {
   plano_id: string | null; plano_nome: string | null; meses: number | null; preco: number | null
   pago_ate: string | null; link_pagamento: string | null; ambiente: 'sandbox' | 'producao' | null
 }
-export type PlanoVenda = { id: string; nome: string; preco: number; meses: number; descricao: string; destaque: boolean }
+export type PlanoVenda = { id: string; nome: string; preco: number; meses: number; descricao: string; destaque: boolean; limite_pacientes?: number | null }
 type Estado = { carregando: boolean; acesso: Acesso | null; erro: string; recarregar: () => void }
 
 const CHAVE = 'papa-prato:acesso'
@@ -61,9 +61,9 @@ export function useAcesso(): Estado {
   return { carregando: carregando && !acesso, acesso, erro, recarregar: () => setN(x => x + 1) }
 }
 
-export async function carregarPlanos(): Promise<PlanoVenda[]> {
+export async function carregarPlanos(publico: 'paciente' | 'profissional' = 'paciente'): Promise<PlanoVenda[]> {
   if (!supabase) return []
-  const { data, error } = await supabase.from('planos').select('id,nome,preco,meses,descricao,destaque').eq('ativo', true).order('ordem')
+  const { data, error } = await supabase.from('planos').select('id,nome,preco,meses,descricao,destaque,limite_pacientes').eq('ativo', true).eq('publico', publico).order('ordem')
   if (error) throw error
   return (data ?? []).map(p => ({ ...p, preco: Number(p.preco) })) as PlanoVenda[]
 }
@@ -78,8 +78,9 @@ async function chamar(corpo: Record<string, unknown>) {
   if (!r.ok) throw new Error(res.erro || `Erro ${r.status}`)
   return res
 }
-export const assinar = (plano_id: string, nome: string, cpf: string): Promise<{ link: string | null; vencimento: string }> => chamar({ acao: 'assinar', plano_id, nome, cpf })
-export const cancelarAssinatura = (): Promise<{ ok: true; pago_ate: string | null }> => chamar({ acao: 'cancelar' })
+export type Publico = 'paciente' | 'profissional'
+export const assinar = (plano_id: string, nome: string, cpf: string, publico: Publico = 'paciente'): Promise<{ link: string | null; vencimento: string }> => chamar({ acao: 'assinar', plano_id, nome, cpf, publico })
+export const cancelarAssinatura = (publico: Publico = 'paciente'): Promise<{ ok: true; pago_ate: string | null }> => chamar({ acao: 'cancelar', publico })
 
 export const reais = (v: number) => v.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })
 export const dataCurta = (d: string) => new Date(d).toLocaleDateString('pt-BR', { day: '2-digit', month: 'long', year: 'numeric' })

@@ -54,8 +54,8 @@ async function supa<T>(caminho: string, token: string, corpo?: unknown): Promise
   return r.json() as Promise<T>
 }
 
-const salvar = (usuario: string, dados: Record<string, unknown>) =>
-  supa('/rest/v1/rpc/servidor_salvar_assinatura', process.env.SUPABASE_PUBLISHABLE_KEY!, { token: process.env.ASAAS_WEBHOOK_TOKEN, usuario, dados })
+const salvar = (usuario: string, dados: Record<string, unknown>, prof = false) =>
+  supa(`/rest/v1/rpc/${prof ? 'servidor_salvar_assinatura_prof' : 'servidor_salvar_assinatura'}`, process.env.SUPABASE_PUBLISHABLE_KEY!, { token: process.env.ASAAS_WEBHOOK_TOKEN, usuario, dados })
 
 export async function POST(req: Request) {
   if (!process.env.SUPABASE_URL || !process.env.SUPABASE_PUBLISHABLE_KEY || !process.env.ASAAS_WEBHOOK_TOKEN) return json(503, { erro: 'Pagamentos ainda não configurados.' })
@@ -71,16 +71,19 @@ export async function POST(req: Request) {
   if (recentes.length >= 10) return json(429, { erro: 'Muitas tentativas. Espere alguns minutos.' })
   pedidos.set(uid, [...recentes, agora])
 
-  let corpo: { acao?: string; plano_id?: string; nome?: string; cpf?: string }
+  let corpo: { acao?: string; plano_id?: string; nome?: string; cpf?: string; publico?: string }
   try { corpo = await req.json() } catch { return json(400, { erro: 'Pedido inválido.' }) }
 
   try {
-    const acesso = await supa<Acesso | null>('/rest/v1/rpc/meu_acesso', token, {})
+    // Profissional (nutricionista) tem assinatura própria; no Asaas a referência é 'prof:<id>'.
+    const prof = corpo.publico === 'profissional'
+    const ref = prof ? `prof:${uid}` : uid
+    const acesso = await supa<Acesso | null>(prof ? '/rest/v1/rpc/meu_acesso_prof' : '/rest/v1/rpc/meu_acesso', token, {})
 
     if (corpo.acao === 'cancelar') {
       if (!acesso?.asaas_assinatura_id || acesso.status === 'cancelada') return json(400, { erro: 'Você não tem uma assinatura ativa para cancelar.' })
       await api.chamar('DELETE', `/subscriptions/${encodeURIComponent(acesso.asaas_assinatura_id)}`).catch(e => { if (e.status !== 404) throw e })
-      await salvar(uid, { status: 'cancelada', link_pagamento: null, ambiente: acesso.ambiente ?? api.amb })
+      await salvar(uid, { status: 'cancelada', link_pagamento: null, ambiente: acesso.ambiente ?? api.amb }, prof)
       return json(200, { ok: true, pago_ate: acesso.pago_ate })
     }
 
@@ -95,7 +98,11 @@ export async function POST(req: Request) {
     if (nome.length < 5 || !nome.includes(' ')) return json(400, { erro: 'Informe seu nome completo.' })
     if (!cpfValido(cpf)) return json(400, { erro: 'CPF inválido. Confira os números.' })
 
-    const [plano] = await supa<Plano[]>(`/rest/v1/planos?select=id,nome,preco,meses,ativo&id=eq.${encodeURIComponent(corpo.plano_id ?? '')}&ativo=eq.true`, token)
+    if (prof) {
+      const [cad] = await supa<{ status: string }[]>(`/rest/v1/profissionais?select=status&user_id=eq.${uid}`, token)
+      if (cad?.status !== 'verificado') return json(403, { erro: 'Seu cadastro profissional ainda não foi verificado pela equipe.' })
+    }
+    const [plano] = await supa<Plano[]>(`/rest/v1/planos?select=id,nome,preco,meses,ativo&id=eq.${encodeURIComponent(corpo.plano_id ?? '')}&ativo=eq.true&publico=eq.${prof ? 'profissional' : 'paciente'}`, token)
     if (!plano || !CICLO[plano.meses]) return json(400, { erro: 'Plano indisponível.' })
 
     // Assinatura pendente (ainda não paga): troca pela nova, para não deixar duas cobranças abertas.
@@ -106,7 +113,7 @@ export async function POST(req: Request) {
     let cliente = acesso?.ambiente === api.amb ? acesso?.asaas_cliente_id : null
     if (cliente) await api.chamar('POST', `/customers/${encodeURIComponent(cliente)}`, { name: nome, cpfCnpj: cpf }).catch(() => { cliente = null })
     if (!cliente) {
-      const c = await api.chamar<{ id: string }>('POST', '/customers', { name: nome, cpfCnpj: cpf, email: usuario.email, externalReference: uid, notificationDisabled: false })
+      const c = await api.chamar<{ id: string }>('POST', '/customers', { name: nome, cpfCnpj: cpf, email: usuario.email, externalReference: ref, notificationDisabled: false })
       cliente = c.id
     }
 
@@ -117,7 +124,7 @@ export async function POST(req: Request) {
 
     const assinatura = await api.chamar<{ id: string }>('POST', '/subscriptions', {
       customer: cliente, billingType: 'UNDEFINED', value: Number(plano.preco), nextDueDate: vencimento,
-      cycle: CICLO[plano.meses], description: `Papa Prato - plano ${plano.nome}`, externalReference: uid,
+      cycle: CICLO[plano.meses], description: `Papa Prato${prof ? ' Profissional' : ''} - plano ${plano.nome}`, externalReference: ref,
     })
 
     let link: string | null = null
@@ -127,7 +134,7 @@ export async function POST(req: Request) {
       if (!link) await new Promise(r => setTimeout(r, 700))
     }
 
-    await salvar(uid, { plano_id: plano.id, ambiente: api.amb, status: 'pendente', asaas_cliente_id: cliente, asaas_assinatura_id: assinatura.id, link_pagamento: link })
+    await salvar(uid, { plano_id: plano.id, ambiente: api.amb, status: 'pendente', asaas_cliente_id: cliente, asaas_assinatura_id: assinatura.id, link_pagamento: link }, prof)
     return json(200, { link, vencimento })
   } catch (e) {
     console.error('assinatura', (e as Error).message)

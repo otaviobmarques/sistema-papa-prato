@@ -710,7 +710,7 @@ footer a { color: var(--broto); }
   var caixaPlanos = document.getElementById('opcoes-plus')
   if (caixaPlanos && window.fetch) {
     var CHAVE = 'sb_publishable_9JQqL2n-cCBqjDWHIhyuIw_xHHcmDmv'
-    fetch('https://crbydlwmtyxvzhiowpmb.supabase.co/rest/v1/planos?select=nome,preco,meses,descricao,destaque&ativo=eq.true&order=ordem', { headers: { apikey: CHAVE } })
+    fetch('https://crbydlwmtyxvzhiowpmb.supabase.co/rest/v1/planos?select=nome,preco,meses,descricao,destaque&ativo=eq.true&publico=eq.paciente&order=ordem', { headers: { apikey: CHAVE } })
       .then(function (r) { return r.ok ? r.json() : null })
       .then(function (lista) {
         if (!lista || !lista.length) return

@@ -149,6 +149,8 @@ export async function apagarConta() {
   // Cancela a cobrança recorrente no Asaas antes de apagar a conta, para ninguém ser cobrado depois.
   const { data: acesso } = await supabase.rpc('meu_acesso')
   if (acesso?.asaas_assinatura_id && acesso.status !== 'cancelada') await cancelarAssinatura()
+  const { data: prof } = await supabase.rpc('meu_acesso_prof')
+  if (prof?.asaas_assinatura_id && prof.status !== 'cancelada') await cancelarAssinatura('profissional')
   const { error } = await supabase.rpc('apagar_minha_conta')
   if (error) throw error
   await supabase.auth.signOut()
