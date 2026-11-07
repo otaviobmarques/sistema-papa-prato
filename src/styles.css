@@ -5,6 +5,7 @@
   --orange: #C2410C; --orange-soft: #FFEDE0; --peach: #FDBA74;
   --blue: #2563EB; --blue-soft: #E6F0FF; --red: #B91C1C;
   --c-prot: #C2410C; --c-carb: #CA8A04; --c-gord: #2563EB;
+  --chart-kcal: #16A34A; --chart-agua: #2563EB; --chart-peso: #C2410C;
   --radius: 22px; --shadow: 0 1px 2px rgba(60, 40, 20, .05), 0 8px 24px rgba(60, 40, 20, .06);
   --font-title: 'Fredoka', ui-rounded, system-ui, sans-serif;
   --font: 'Inter', system-ui, -apple-system, 'Segoe UI', sans-serif;
@@ -17,6 +18,8 @@
     --brand: #86EFAC; --green: #22C55E; --green-2: #4ADE80; --green-soft: #1E3326;
     --orange: #FB923C; --orange-soft: #3A2618; --blue: #60A5FA; --blue-soft: #1B2840; --red: #F87171;
     --c-prot: #FB923C; --c-carb: #FACC15; --c-gord: #60A5FA;
+  --chart-kcal: #16A34A; --chart-agua: #3B82F6; --chart-peso: #EA580C;
+    --chart-kcal: #16A34A; --chart-agua: #3B82F6; --chart-peso: #EA580C;
     --shadow: 0 1px 2px rgba(0,0,0,.3); color-scheme: dark;
   }
 }
@@ -26,6 +29,7 @@
   --brand: #86EFAC; --green: #22C55E; --green-2: #4ADE80; --green-soft: #1E3326;
   --orange: #FB923C; --orange-soft: #3A2618; --blue: #60A5FA; --blue-soft: #1B2840; --red: #F87171;
   --c-prot: #FB923C; --c-carb: #FACC15; --c-gord: #60A5FA;
+  --chart-kcal: #16A34A; --chart-agua: #3B82F6; --chart-peso: #EA580C;
   --shadow: 0 1px 2px rgba(0,0,0,.3); color-scheme: dark;
 }
 :root[data-contrast="high"] { --ink-2: var(--ink); --ink-3: var(--ink); --line: var(--ink-2); }

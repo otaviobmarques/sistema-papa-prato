@@ -61,6 +61,7 @@ export type Estado = {
   conteudo: { dicas: string[]; saudacoes: { manha: string; tarde: string; noite: string } }
   tourVisto: boolean
   produtos: Record<string, Produto>
+  pesos?: { data: string; kg: number }[] // histórico de peso (um por dia)
   // Cardápio e receitas publicados pela equipe (vêm do servidor; sem conexão, valem os do código)
   modelosEquipe?: Modelo[]
   receitasEquipe?: Receita[]
@@ -70,7 +71,7 @@ export type Estado = {
 
 // Campos que vão para a nuvem no documento do perfil. Os dias vão em tabela própria;
 // alimentos da equipe e conteúdo do mascote vêm do servidor e não sobem daqui.
-export const CAMPOS_SINCRONIZADOS = ['perfil', 'consentimento', 'plano', 'favoritos', 'compras', 'conquistasVistas', 'ajustes', 'tourVisto', 'produtos'] as const
+export const CAMPOS_SINCRONIZADOS = ['perfil', 'consentimento', 'plano', 'favoritos', 'compras', 'conquistasVistas', 'ajustes', 'tourVisto', 'produtos', 'pesos'] as const
 
 export const DICAS_PADRAO = [
   'Metade do prato com legumes e verduras deixa tudo mais colorido e nutritivo.',
@@ -173,6 +174,14 @@ export function editarRegistro(data: string, id: string, mud: Partial<Registro>)
   atualizar(e => {
     const dia = e.dias[data] ?? diaVazio()
     return { ...e, dias: { ...e.dias, [data]: { ...dia, registros: dia.registros.map(r => r.id === id ? { ...r, ...mud } : r) } } }
+  })
+}
+// Peso do dia: guarda no histórico e atualiza o perfil (as metas usam o peso mais recente).
+export function registrarPeso(data: string, kg: number) {
+  atualizar(e => {
+    const pesos = [...(e.pesos ?? []).filter(p => p.data !== data), { data, kg }].sort((a, b) => a.data.localeCompare(b.data)).slice(-400)
+    const ultimo = pesos[pesos.length - 1]
+    return { ...e, pesos, perfil: e.perfil ? { ...e.perfil, peso: ultimo.kg } : e.perfil }
   })
 }
 export function beberAgua(data: string, ml: number) {
