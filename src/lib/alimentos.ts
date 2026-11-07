@@ -1,8 +1,9 @@
 import { MODELOS, RECEITAS } from '../data/cardapio'
 
-// Base de alimentos (TACO, TBCA, POF, USDA, CoFID) gerada de fontes-ref por scripts/gerar-alimentos.py.
+// Base de alimentos (TACO, TBCA, POF, USDA, CoFID, Ciqual, CNF, AFCD, Frida e Fineli) gerada de fontes-ref
+// por scripts/gerar-alimentos.py.
 // Os valores são por 100 g de parte comestível, exatamente como a fonte publica.
-export type Fonte = 'TACO' | 'TBCA' | 'POF' | 'USDA' | 'COFID' | 'OFF'
+export type Fonte = 'TACO' | 'TBCA' | 'POF' | 'USDA' | 'COFID' | 'CIQUAL' | 'CNF' | 'AFCD' | 'FRIDA' | 'FINELI' | 'OFF'
 export type Medida = { nome: string; gramas: number }
 export type Alimento = {
   id: string; nome: string; fonte: Fonte
@@ -18,11 +19,14 @@ export type Nutrientes = { kcal: number; proteina: number; carboidrato: number; 
 
 export const NOME_FONTE: Record<Fonte, string> = {
   TACO: 'TACO · NEPA/UNICAMP', TBCA: 'TBCA · USP/FoRC', POF: 'IBGE · POF 2008-2009',
-  USDA: 'USDA FoodData Central', COFID: 'CoFID 2021 (Reino Unido)', OFF: 'Open Food Facts (rótulo do produto)',
+  USDA: 'USDA FoodData Central', COFID: 'CoFID 2021 (Reino Unido)', CIQUAL: 'Ciqual 2025 · ANSES (França)',
+  CNF: 'Canadian Nutrient File 2026 (Canadá)', AFCD: 'AFCD Release 3 · FSANZ (Austrália)', FRIDA: 'Frida 5.5 · DTU (Dinamarca)',
+  FINELI: 'Fineli · THL (Finlândia)', OFF: 'Open Food Facts (rótulo do produto)',
 }
 export const CITACAO_OFF = 'Dados do produto: Open Food Facts (openfoodfacts.org), licença ODbL. Informações enviadas por colaboradores; confira o rótulo.'
-// Ordem de preferência na busca: bases brasileiras primeiro.
-const PRIORIDADE: Record<Fonte, number> = { TACO: 0, TBCA: 1, POF: 2, USDA: 3, COFID: 4, OFF: 1 }
+// Ordem de preferência na busca: bases brasileiras primeiro; as internacionais completam o que faltar
+// (as com nome traduzido do inglês por último).
+const PRIORIDADE: Record<Fonte, number> = { TACO: 0, TBCA: 1, POF: 2, USDA: 3, CNF: 4, COFID: 4, AFCD: 5, FINELI: 5, CIQUAL: 6, FRIDA: 6, OFF: 1 }
 
 export const semAcento = (s: string) => s.normalize('NFD').replace(/[̀-ͯ]/g, '').toLowerCase()
 

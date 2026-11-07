@@ -8,7 +8,7 @@ import { sairDaConta } from '../lib/sync'
 import { useEstado } from '../lib/store'
 import { assinar, carregarPlanos, conferirAcessoDeNovo, formatarCpf, reais, type Acesso, type PlanoVenda } from '../lib/assinatura'
 
-const INCLUSO = ['Cardápio da semana do seu jeito', 'Foto do prato com IA e código de barras', '18 mil alimentos brasileiros (TACO/TBCA)', 'Lista de compras, água, diário e conquistas', 'Seus dados salvos e em todos os aparelhos']
+const INCLUSO = ['Cardápio da semana do seu jeito', 'Foto do prato com IA e código de barras', '30 mil alimentos, com as tabelas brasileiras TACO e TBCA', 'Lista de compras, água, diário e conquistas', 'Seus dados salvos e em todos os aparelhos']
 
 // Tela de assinatura: aparece depois do questionário inicial e sempre que o período pago acaba.
 export function Assinar({ acesso }: { acesso: Acesso | null }) {

@@ -196,7 +196,7 @@ function Alimentos() {
   const novo = (): AlimentoPersonalizado => ({ id: 'pp_' + uid(), nome: '', kcal: 0, proteina: 0, carboidrato: 0, gordura: 0, fibra: null, medidas: [], publicado: false, atualizadoEm: new Date().toISOString() })
   return (
     <>
-      <Cabecalho titulo="Alimentos" texto="A base oficial (TACO, TBCA, IBGE/POF, USDA, CoFID) é somente leitura: os números nunca são alterados. Para atualizar a base, rode scripts/gerar-alimentos.py a partir do repositório fontes-ref. Itens próprios (ex.: receitas da casa) podem ser cadastrados abaixo e só aparecem no app depois de publicados." />
+      <Cabecalho titulo="Alimentos" texto="A base oficial (TACO, TBCA, IBGE/POF, USDA, CoFID, Ciqual, CNF, AFCD, Frida e Fineli) é somente leitura: os números nunca são alterados. Para atualizar a base, rode scripts/gerar-alimentos.py a partir do repositório fontes-ref. Itens próprios (ex.: receitas da casa) podem ser cadastrados abaixo e só aparecem no app depois de publicados." />
       <div className="card stack">
         <div className="row between"><h3>Alimentos da equipe ({pers.length})</h3><button className="btn sm" onClick={() => setEdit(novo())}><Plus size={16} /> Novo alimento</button></div>
         {pers.length ? (

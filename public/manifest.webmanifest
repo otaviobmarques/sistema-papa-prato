@@ -2,7 +2,7 @@
   "id": "/app/",
   "name": "Papa Prato",
   "short_name": "Papa Prato",
-  "description": "Cardápio da semana, registro por foto ou código de barras e 18 mil alimentos brasileiros.",
+  "description": "Cardápio da semana, registro por foto ou código de barras e 30 mil alimentos.",
   "lang": "pt-BR",
   "dir": "ltr",
   "start_url": "/app/?origem=pwa",

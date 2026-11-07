@@ -59,12 +59,12 @@ export function AdicionarAlimento({ aberta, onFechar, data, refeicaoInicial, mod
             </div>
           )}
           {!base.pronto ? (
-            <div className="empty">{base.erro ? <>😕 {base.erro}</> : <><Mascot size={70} humor="pensativo" />Carregando 18 mil alimentos…</>}</div>
+            <div className="empty">{base.erro ? <>😕 {base.erro}</> : <><Mascot size={70} humor="pensativo" />Carregando 30 mil alimentos…</>}</div>
           ) : q.trim() === '' ? (
             recentes.length ? (
               <div><p className="label" style={{ marginBottom: 4 }}>Recentes</p><Lista itens={recentes} onEscolher={setSel} /></div>
             ) : (
-              <div className="empty"><Mascot size={80} />Digite o nome de um alimento ou prato.<br /><span className="tiny">Bases TACO, TBCA, IBGE/POF, USDA e CoFID.</span></div>
+              <div className="empty"><Mascot size={80} />Digite o nome de um alimento ou prato.<br /><span className="tiny">Bases brasileiras (TACO, TBCA, IBGE/POF) e internacionais (USDA, CoFID, Ciqual, CNF, AFCD, Frida e Fineli).</span></div>
             )
           ) : resultados.length ? (
             <Lista itens={resultados} onEscolher={setSel} />
