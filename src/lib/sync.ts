@@ -119,14 +119,18 @@ export function iniciarSincronizacao() {
 // Conteúdo publicado pela equipe (alimentos próprios e textos do mascote).
 export async function carregarConteudoDaEquipe() {
   if (!supabase) return
-  const [{ data: alimentos }, { data: conteudo }] = await Promise.all([
+  const [{ data: alimentos }, { data: conteudo }, { data: modelos }, { data: receitas }] = await Promise.all([
     supabase.from('alimentos_equipe').select('*').eq('publicado', true),
     supabase.from('conteudo').select('dados').eq('id', 'mascote').maybeSingle(),
+    supabase.from('modelos_refeicao').select('id, refeicao, nome, itens, regioes, tempo').eq('status', 'publicado').order('id'),
+    supabase.from('receitas').select('id, nome, emoji, minutos, porcoes, regiao, itens, extras, passos').eq('status', 'publicado').order('id'),
   ])
   atualizar(e => ({
     ...e,
     ...(alimentos ? { alimentosPersonalizados: alimentos.map(a => ({ id: a.id, nome: a.nome, kcal: +a.kcal, proteina: +a.proteina, carboidrato: +a.carboidrato, gordura: +a.gordura, fibra: a.fibra == null ? null : +a.fibra, medidas: a.medidas, publicado: a.publicado, atualizadoEm: a.atualizado_em })) } : {}),
     ...(conteudo?.dados ? { conteudo: { ...e.conteudo, ...conteudo.dados } } : {}),
+    ...(modelos ? { modelosEquipe: modelos.map(m => ({ ...m, regioes: m.regioes?.length ? m.regioes : undefined })) } : {}),
+    ...(receitas ? { receitasEquipe: receitas } : {}),
   }), { marcar: false })
 }
 

@@ -1,9 +1,10 @@
 import { useEffect, useMemo, useState } from 'react'
-import { Activity, ArrowLeft, Bot, Database, LifeBuoy, LogOut, Shield, UserCog, Users, LayoutDashboard, ListChecks, MessageCircle, Plus, Rocket, Trash2, UtensilsCrossed } from 'lucide-react'
+import { Activity, ArrowLeft, BookOpen, Bot, Database, LifeBuoy, LogOut, Shield, UserCog, Users, LayoutDashboard, ListChecks, MessageCircle, Plus, Rocket, Trash2, UtensilsCrossed } from 'lucide-react'
 import { Folha, avisar, Avisos, fmt, useAlimentos } from '../components/ui'
 import { FormularioLink } from '../components/Conta'
 import { Assinatura } from '../components/Assinatura'
 import { Equipe, IA, PainelServidor, Privacidade, Saude, SuporteEquipe, Usuarios } from './Modulos'
+import { EditorCardapios, EditorReceitas } from './Editores'
 import { carregarAlimentosEquipe, excluirAlimentoEquipe, publicarConteudo, salvarAlimentoEquipe, usePapel } from '../lib/equipe'
 import { supabase, traduzirErro, useSessao } from '../lib/supabase'
 import { Mascot } from '../components/Mascot'
@@ -13,13 +14,14 @@ import { buscar, NOME_FONTE, nutrientesDe, somar, type Fonte } from '../lib/alim
 import { CONQUISTAS, desbloqueadas } from '../lib/conquistas'
 import { DICAS_PADRAO, atualizar, obterEstado, uid, useEstado, type AlimentoPersonalizado } from '../lib/store'
 
-type Aba = 'painel' | 'usuarios' | 'suporte' | 'alimentos' | 'cardapios' | 'conteudo' | 'ia' | 'privacidade' | 'saude' | 'equipe' | 'roadmap'
+type Aba = 'painel' | 'usuarios' | 'suporte' | 'alimentos' | 'cardapios' | 'receitas' | 'conteudo' | 'ia' | 'privacidade' | 'saude' | 'equipe' | 'roadmap'
 const ABAS: { id: Aba; nome: string; icone: typeof Database; servidor?: boolean }[] = [
   { id: 'painel', nome: 'Painel', icone: LayoutDashboard },
   { id: 'usuarios', nome: 'Usuários', icone: Users, servidor: true },
   { id: 'suporte', nome: 'Suporte', icone: LifeBuoy, servidor: true },
   { id: 'alimentos', nome: 'Alimentos', icone: Database },
-  { id: 'cardapios', nome: 'Cardápios e receitas', icone: UtensilsCrossed },
+  { id: 'cardapios', nome: 'Cardápios', icone: UtensilsCrossed },
+  { id: 'receitas', nome: 'Receitas', icone: BookOpen, servidor: true },
   { id: 'conteudo', nome: 'Conteúdo do mascote', icone: MessageCircle },
   { id: 'ia', nome: 'Inteligência artificial', icone: Bot, servidor: true },
   { id: 'privacidade', nome: 'Privacidade', icone: Shield, servidor: true },
@@ -118,7 +120,8 @@ function PainelAdmin({ modo }: { modo: 'local' | 'servidor' }) {
         {aba === 'saude' && <Saude />}
         {aba === 'equipe' && <Equipe />}
         {aba === 'alimentos' && <Alimentos />}
-        {aba === 'cardapios' && <Cardapios />}
+        {aba === 'cardapios' && (modo === 'servidor' ? <EditorCardapios /> : <Cardapios />)}
+        {aba === 'receitas' && <EditorReceitas />}
         {aba === 'conteudo' && <Conteudo />}
         {aba === 'roadmap' && <Roadmap />}
       </main>
@@ -316,9 +319,7 @@ function Conteudo() {
 
 function Roadmap() {
   const itens = [
-    { id: 'A04', nome: 'Receitas editáveis', o: 'Criar e editar receitas no painel, com aprovação e histórico. Hoje elas ficam no código.' },
-    { id: 'A05', nome: 'Cardápios editáveis', o: 'Criar modelos de refeição no painel e testar como ficam para cada perfil.' },
-    { id: 'A07', nome: 'Assinaturas', o: 'Planos pagos (Plus), pagamento, cupons e reembolsos. Precisa definir preços e o meio de pagamento.' },
+    { id: 'A07', nome: 'Assinaturas', o: 'Planos pagos (Plus) com o Asaas: Pix, cartão e boleto recorrente, cupons e reembolsos. Falta definir preços e a chave do Asaas.' },
     { id: 'A11', nome: 'Gamificação', o: 'Criar conquistas e campanhas pelo painel, com regras contra fraude.' },
     { id: 'A12', nome: 'Profissionais', o: 'Nutricionistas com CRN verificado acompanhando pacientes. Precisa de decisão de negócio.' },
     { id: 'T34', nome: 'Conversa com o Papa', o: 'Chat com a IA sobre alimentação, com histórico que a pessoa pode apagar. Candidato ao Plus.' },
@@ -327,7 +328,7 @@ function Roadmap() {
     <>
       <Cabecalho titulo="Próximos módulos" texto="O que falta do projeto original de 14 módulos do painel e das telas do app." />
       <div className="kpis">{itens.map(i => <div key={i.id} className="kpi stack" style={{ gap: 6 }}><span className="tag gray" style={{ width: 'fit-content' }}>{i.id}</span><b>{i.nome}</b><small>{i.o}</small></div>)}</div>
-      <div className="card row"><ListChecks /><p className="small">Já funcionando: A01 Painel, A02 Usuários, A03 Alimentos, A05 Cardápios (verificação), A06 Conteúdo do mascote, A08 Suporte, A09 Privacidade, A10 IA, A13 Saúde do sistema e A14 Equipe e segurança.</p></div>
+      <div className="card row"><ListChecks /><p className="small">Já funcionando: A01 Painel, A02 Usuários, A03 Alimentos, A04 Receitas, A05 Cardápios (com simulação por perfil), A06 Conteúdo do mascote, A08 Suporte, A09 Privacidade, A10 IA, A13 Saúde do sistema e A14 Equipe e segurança.</p></div>
     </>
   )
 }

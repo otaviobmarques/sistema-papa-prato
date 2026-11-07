@@ -135,6 +135,14 @@ Painel com números do servidor (A01), Usuários com e-mail mascarado (A02), Sup
 Inteligência artificial com uso, erros, tempo e custo estimado (A10), Saúde do sistema (A13) e Equipe e segurança,
 com convites e troca de senha (A14). A função da foto grava cada chamada em `ia_uso` (sem foto nem conteúdo).
 
+## Receitas e cardápios editáveis (A04/A05)
+
+Receitas (`receitas`) e modelos de refeição (`modelos_refeicao`) ficam no banco, com rascunho e publicação.
+Cada alteração guarda a versão anterior em `versoes_conteudo`, e `restaurar_versao` desfaz a mudança como uma
+nova versão. O app usa o que está publicado; sem conexão, usa o que está em `src/data/cardapio.ts`.
+O painel calcula calorias e alérgenos a partir dos alimentos da base e simula o cardápio para um perfil
+(meta, dieta, alergias e o que a pessoa não come).
+
 ## Próximos passos
 
 1. E-mail próprio para os links de acesso (SMTP, ex.: Resend) e domínio definitivo.
