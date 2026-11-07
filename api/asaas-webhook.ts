@@ -1,7 +1,7 @@
 // Função da Vercel: recebe os avisos do Asaas (cobranças e assinaturas) e guarda cada evento no banco.
 // Configuração no Asaas: Integrações → Webhooks, URL https://<site>/api/asaas-webhook,
-// "Token de autenticação" igual a ASAAS_WEBHOOK_TOKEN (variável da Vercel). O Asaas manda esse token
-// no cabeçalho asaas-access-token; sem ele (ou com outro), a função recusa.
+// com o token que o Asaas gerou: produção em ASAAS_WEBHOOK_TOKEN e sandbox em ASAAS_WEBHOOK_TOKEN_SANDBOX
+// (variáveis da Vercel). O Asaas manda o token no cabeçalho asaas-access-token; sem ele (ou com outro), recusa.
 // O banco confere o token de novo (pelo hash) e ignora eventos repetidos, então reenvios são seguros.
 import { timingSafeEqual } from 'node:crypto'
 
@@ -12,12 +12,12 @@ const iguais = (a: string, b: string) => {
 const json = (corpo: unknown, status = 200) => Response.json(corpo, { status })
 
 export async function POST(req: Request) {
-  const esperado = process.env.ASAAS_WEBHOOK_TOKEN
+  const aceitos = [process.env.ASAAS_WEBHOOK_TOKEN, process.env.ASAAS_WEBHOOK_TOKEN_SANDBOX].filter((t): t is string => !!t)
   const url = process.env.SUPABASE_URL, chave = process.env.SUPABASE_PUBLISHABLE_KEY
-  if (!esperado || !url || !chave) return json({ erro: 'webhook não configurado' }, 503)
+  if (!aceitos.length || !url || !chave) return json({ erro: 'webhook não configurado' }, 503)
 
   const token = req.headers.get('asaas-access-token') ?? ''
-  if (!iguais(token, esperado)) return json({ erro: 'token inválido' }, 401)
+  if (!aceitos.some(t => iguais(token, t))) return json({ erro: 'token inválido' }, 401)
 
   let evento: unknown
   try { evento = await req.json() } catch { return json({ erro: 'corpo inválido' }, 400) }
