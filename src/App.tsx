@@ -17,6 +17,7 @@ import { carregarConteudoDaEquipe } from './lib/sync'
 import { supabase, useSessao } from './lib/supabase'
 import { useAcesso } from './lib/assinatura'
 import { Assinar } from './screens/Assinar'
+import { AreaProfissional } from './screens/AreaProfissional'
 import { AdicionarAlimento } from './screens/AdicionarAlimento'
 import { Conquistas } from './screens/Conquistas'
 import { Diario } from './screens/Diario'
@@ -53,9 +54,11 @@ export function App() {
   // Quem pediu o link pelo painel volta para o painel depois de entrar.
   useEffect(() => {
     try { if (sessao && localStorage.getItem('papa-prato:voltar-admin')) { localStorage.removeItem('papa-prato:voltar-admin'); location.hash = 'admin' } } catch { /* ok */ }
+    try { if (sessao && localStorage.getItem('papa-prato:voltar-profissional')) { localStorage.removeItem('papa-prato:voltar-profissional'); location.hash = 'profissional' } } catch { /* ok */ }
   }, [sessao])
   useEffect(() => { carregarAlimentos().catch(() => {}); carregarConteudoDaEquipe().catch(() => {}) }, []) // já começa a baixar a base
   if (hash.startsWith('#admin')) return <Admin />
+  if (hash.startsWith('#profissional')) return <AreaProfissional />
   if (!perfil) return <Onboarding />
   return <Portao />
 }
