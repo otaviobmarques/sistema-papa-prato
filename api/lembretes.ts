@@ -55,7 +55,7 @@ export async function POST(req: Request) {
     try {
       await webpush.sendNotification({ endpoint: ins.endpoint, keys: { p256dh: ins.p256dh, auth: ins.auth } },
         JSON.stringify({ ...t, tag: 'papa-' + item.tipo }),
-        { vapidDetails: { subject: 'https://papa-prato.vercel.app', publicKey: chaves.publicKey, privateKey: chaves.privateKey }, TTL: 1800, urgency: 'normal' })
+        { vapidDetails: { subject: 'https://papaprato.com.br', publicKey: chaves.publicKey, privateKey: chaves.privateKey }, TTL: 1800, urgency: 'normal' })
       enviados++
     } catch (e) {
       const status = (e as { statusCode?: number }).statusCode
