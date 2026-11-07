@@ -12,7 +12,7 @@ import { REFEICOES } from '../lib/store'
 type Cadastro = { user_id: string; nome: string; crn: string; uf: string; regiao_crn: number; status: 'pendente' | 'verificado' | 'recusado'; motivo: string | null; codigo: string }
 type Paciente = { id: string; apelido: string; objetivo: string | null; desde: string; compartilha_diario: boolean; dias_7: number | null; kcal_media_7: number | null; ultimo_registro: string | null }
 type Reg = { nome: string; gramas?: number; refeicao?: string; hora?: string; n?: { kcal?: number; proteina?: number; carboidrato?: number; gordura?: number } }
-type Diario = { perfil: Record<string, unknown> | null; dias: { data: string; registros: Reg[]; agua: number[] }[] }
+type Diario = { perfil: Record<string, unknown> | null; pesos?: { data: string; kg: number }[] | null; dias: { data: string; registros: Reg[]; agua: number[] }[] }
 
 const UFS = 'AC AL AP AM BA CE DF ES GO MA MT MS MG PA PB PR PE PI RJ RN RS RO RR SC SP SE TO'.split(' ')
 const OBJETIVOS: Record<string, string> = { 'comer-melhor': 'Comer melhor', 'perder-peso': 'Perder peso', 'ganhar-massa': 'Ganhar massa', manter: 'Manter o peso' }
@@ -140,6 +140,7 @@ function DiarioPaciente({ p, onVoltar }: { p: Paciente; onVoltar: () => void }) 
           <div className="card small row wrap" style={{ gap: 14 }}>
             {[['Objetivo', OBJETIVOS[String(pf.objetivo)] ?? '—'], ['Dieta', DIETAS[String(pf.dieta)] ?? '—'], ['Idade', pf.idade ?? '—'], ['Peso', pf.peso ? `${pf.peso} kg` : '—'], ['Altura', pf.altura ? `${pf.altura} cm` : '—'], ['Atividade', ATIVIDADES[String(pf.atividade)] ?? '—'], ['Alergias', Array.isArray(pf.alergias) && pf.alergias.length ? (pf.alergias as string[]).join(', ') : 'nenhuma']].map(([k, v]) => <div key={String(k)}><span className="tiny">{String(k)}</span><div><b>{String(v)}</b></div></div>)}
           </div>
+          {!!d.pesos?.length && <div className="card small"><b>Peso registrado</b><div className="row wrap" style={{ gap: 12, marginTop: 6 }}>{d.pesos.map(p => <span key={p.data} className="num">{dataBr(p.data)}: <b>{fmt(p.kg, 1)} kg</b></span>)}</div></div>}
           <p className="tiny">Últimos 14 dias. Valores calculados pelo app com a base TACO/TBCA, a partir do que o paciente registrou.</p>
           {!d.dias.length && <div className="card small muted">Sem registros nesse período.</div>}
           {d.dias.map(dia => {

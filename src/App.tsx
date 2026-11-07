@@ -5,6 +5,7 @@ import { Avisos, Confete } from './components/ui'
 import { Mascot } from './components/Mascot'
 import { Tour } from './components/Tour'
 import { ConversaPapa } from './components/ConversaPapa'
+import { Evolucao } from './screens/Evolucao'
 import { AvisoConexao } from './components/Conexao'
 import { compartilharCartao } from './lib/cartao'
 import { sequencia } from './lib/conquistas'
@@ -79,6 +80,7 @@ function AppPrincipal() {
   const estado = useEstado(e => e)
   const [festa, setFesta] = useState<string | null>(null)
   const [papa, setPapa] = useState(false)
+  const [evolucao, setEvolucao] = useState(false)
 
   // Comemora conquistas novas.
   useEffect(() => {
@@ -98,6 +100,7 @@ function AppPrincipal() {
     if (acao === 'registrar') setAdd({ aberta: true })
     if (acao === 'foto') setAdd({ aberta: true, modo: 'foto' })
     if (acao === 'papa') setPapa(true)
+    if (acao === 'evolucao') setEvolucao(true)
     if (abaQ && ['inicio', 'diario', 'plano', 'conquistas', 'perfil'].includes(abaQ)) setAba(abaQ as Aba)
     if (q.toString()) history.replaceState(null, '', location.pathname + location.hash)
   }, [])
@@ -116,7 +119,7 @@ function AppPrincipal() {
       </header>
 
       <AvisoConexao />
-      {aba === 'inicio' && <Inicio irPara={ir} adicionar={adicionar} conversar={() => setPapa(true)} />}
+      {aba === 'inicio' && <Inicio irPara={ir} adicionar={adicionar} conversar={() => setPapa(true)} evolucao={() => setEvolucao(true)} />}
       {aba === 'diario' && <Diario data={data} setData={setData} adicionar={adicionar} />}
       {aba === 'plano' && <Plano />}
       {aba === 'conquistas' && <Conquistas />}
@@ -132,6 +135,7 @@ function AppPrincipal() {
 
       <AdicionarAlimento aberta={add.aberta} refeicaoInicial={add.refeicao} modoInicial={add.modo} data={aba === 'diario' ? data : hoje()} onFechar={() => setAdd({ aberta: false })} />
       <ConversaPapa aberta={papa} onFechar={() => setPapa(false)} />
+      <Evolucao aberta={evolucao} onFechar={() => setEvolucao(false)} />
       <Avisos />
       {!estado.tourVisto && !conq && <Tour onFim={() => scrollTo({ top: 0 })} />}
 
