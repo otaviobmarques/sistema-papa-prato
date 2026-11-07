@@ -76,7 +76,7 @@ function LoginEquipe() {
     ev.preventDefault(); setErro(''); setEntrando(true)
     const u = usuario.trim().toLowerCase()
     const { error } = await supabase!.auth.signInWithPassword({ email: u.includes('@') ? u : `${u}@${DOMINIO_INTERNO}`, password: senha })
-    if (error) setErro(/invalid login|credentials/i.test(error.message) ? 'Usuário ou senha incorretos.' : traduzirErro(error.message))
+    if (error) setErro(/banned/i.test(error.message) ? 'Esta conta está bloqueada.' : /invalid login|credentials/i.test(error.message) ? 'Usuário ou senha incorretos.' : traduzirErro(error.message))
     setEntrando(false)
   }
   return (

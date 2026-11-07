@@ -4,6 +4,7 @@ import { avisar, fmt } from '../components/ui'
 import { Conversa, CATEGORIAS, STATUS } from '../screens/Suporte'
 import { supabase, useSessao } from '../lib/supabase'
 import { usePapel } from '../lib/equipe'
+import { GerenciarUsuarios } from './GerenciarUsuarios'
 
 // Módulos do painel que leem o servidor. Tudo passa por funções do banco que só respondem para a equipe
 // e nunca devolvem diário, perfil ou dados de saúde de ninguém.
@@ -59,6 +60,12 @@ export function PainelServidor() {
 // ---------------- A02 Usuários ----------------
 type Usuario = { ref: string; email: string; criado_em: string; ultimo_acesso: string | null; dias_com_registro: number; tem_perfil: boolean; papel: string | null; tickets_abertos: number }
 export function Usuarios() {
+  const { papel } = usePapel()
+  if (papel === 'admin') return <GerenciarUsuarios />
+  return <UsuariosEquipe />
+}
+
+function UsuariosEquipe() {
   const [busca, setBusca] = useState('')
   const [termo, setTermo] = useState('')
   const { dados, erro } = useRpc<Usuario[]>('painel_usuarios', { busca: termo, limite: 100 }, [termo])
