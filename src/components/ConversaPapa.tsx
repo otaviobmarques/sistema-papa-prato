@@ -109,7 +109,7 @@ export function ConversaPapa({ aberta, onFechar }: { aberta: boolean; onFechar: 
           </form>
           <div className="row between" style={{ marginTop: 6 }}>
             <span className="tiny">Dicas educativas, não substituem nutricionista ou médico.</span>
-            {!!msgs?.length && <button className="link tiny row" style={{ gap: 4 }} onClick={apagar}><Trash2 size={13} /> Apagar conversa</button>}
+            {!!msgs?.length && <button className="link tiny row" style={{ gap: 4, whiteSpace: 'nowrap' }} onClick={apagar}><Trash2 size={13} /> Apagar conversa</button>}
           </div>
         </div>
       </div>

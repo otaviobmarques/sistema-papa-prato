@@ -5,7 +5,7 @@ import Anthropic from '@anthropic-ai/sdk'
 
 const MODELO_CLAUDE = process.env.CLAUDE_MODEL || 'claude-opus-5-5'
 const MODELO_GEMINI = process.env.GEMINI_MODEL || 'gemini-3.8-flash'
-const LIMITE_DIA = 80 // uso justo: mensagens por pessoa em 24 h
+const LIMITE_DIA = 30 // uso justo: mensagens por pessoa em 24 h (cada uma custa ~R$ 0,06 de IA)
 const usos = new Map<string, number[]>()
 let clienteClaude: Anthropic | null = null
 
