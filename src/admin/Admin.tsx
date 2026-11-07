@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from 'react'
-import { Activity, ArrowLeft, BookOpen, Bot, Database, LifeBuoy, LogOut, Shield, UserCog, Users, LayoutDashboard, ListChecks, BadgeDollarSign, CreditCard, Medal, MessageCircle, Plus, Rocket, Trash2, UtensilsCrossed } from 'lucide-react'
+import { Activity, ArrowLeft, BookOpen, Bot, Database, LifeBuoy, LogOut, Shield, UserCog, Users, LayoutDashboard, ListChecks, BadgeDollarSign, CreditCard, Medal, Stethoscope, MessageCircle, Plus, Rocket, Trash2, UtensilsCrossed } from 'lucide-react'
 import { Folha, avisar, Avisos, fmt, useAlimentos } from '../components/ui'
 import { FormularioLink } from '../components/Conta'
 import { Assinatura } from '../components/Assinatura'
@@ -8,6 +8,7 @@ import { EditorCardapios, EditorReceitas } from './Editores'
 import { Planos } from './Planos'
 import { Assinaturas } from './Assinaturas'
 import { Gamificacao } from './Gamificacao'
+import { Profissionais } from './Profissionais'
 import { carregarAlimentosEquipe, excluirAlimentoEquipe, publicarConteudo, salvarAlimentoEquipe, usePapel } from '../lib/equipe'
 import { supabase, traduzirErro, useSessao } from '../lib/supabase'
 import { Mascot } from '../components/Mascot'
@@ -17,7 +18,7 @@ import { buscar, NOME_FONTE, nutrientesDe, somar, type Fonte } from '../lib/alim
 import { desbloqueadas, todasConquistas } from '../lib/conquistas'
 import { DICAS_PADRAO, atualizar, obterEstado, uid, useEstado, type AlimentoPersonalizado } from '../lib/store'
 
-type Aba = 'painel' | 'usuarios' | 'suporte' | 'alimentos' | 'cardapios' | 'receitas' | 'conteudo' | 'gamificacao' | 'assinaturas' | 'planos' | 'ia' | 'privacidade' | 'saude' | 'equipe' | 'roadmap'
+type Aba = 'painel' | 'usuarios' | 'suporte' | 'alimentos' | 'cardapios' | 'receitas' | 'conteudo' | 'gamificacao' | 'profissionais' | 'assinaturas' | 'planos' | 'ia' | 'privacidade' | 'saude' | 'equipe' | 'roadmap'
 const ABAS: { id: Aba; nome: string; icone: typeof Database; servidor?: boolean }[] = [
   { id: 'painel', nome: 'Painel', icone: LayoutDashboard },
   { id: 'usuarios', nome: 'Usuários', icone: Users, servidor: true },
@@ -27,13 +28,14 @@ const ABAS: { id: Aba; nome: string; icone: typeof Database; servidor?: boolean 
   { id: 'receitas', nome: 'Receitas', icone: BookOpen, servidor: true },
   { id: 'conteudo', nome: 'Conteúdo do mascote', icone: MessageCircle },
   { id: 'gamificacao', nome: 'Gamificação', icone: Medal, servidor: true },
+  { id: 'profissionais', nome: 'Profissionais', icone: Stethoscope, servidor: true },
   { id: 'assinaturas', nome: 'Assinaturas', icone: CreditCard, servidor: true },
   { id: 'planos', nome: 'Planos e preços', icone: BadgeDollarSign, servidor: true },
   { id: 'ia', nome: 'Inteligência artificial', icone: Bot, servidor: true },
   { id: 'privacidade', nome: 'Privacidade', icone: Shield, servidor: true },
   { id: 'saude', nome: 'Saúde do sistema', icone: Activity, servidor: true },
   { id: 'equipe', nome: 'Equipe e segurança', icone: UserCog, servidor: true },
-  { id: 'roadmap', nome: 'Próximos módulos', icone: Rocket },
+  { id: 'roadmap', nome: 'Próximos passos', icone: Rocket },
 ]
 
 // Com o servidor ligado, o painel exige login de alguém da equipe (papel definido no banco).
@@ -132,6 +134,7 @@ function PainelAdmin({ modo }: { modo: 'local' | 'servidor' }) {
         {aba === 'receitas' && <EditorReceitas />}
         {aba === 'conteudo' && <Conteudo />}
         {aba === 'gamificacao' && <Gamificacao />}
+        {aba === 'profissionais' && <Profissionais />}
         {aba === 'roadmap' && <Roadmap />}
       </main>
       <Avisos />
@@ -327,14 +330,17 @@ function Conteudo() {
 }
 
 function Roadmap() {
-  const itens = [
-    { id: 'A12', nome: 'Profissionais', o: 'Nutricionistas com CRN verificado acompanhando pacientes. Precisa de decisão de negócio.' },
+  const itens: { id: string; nome: string; o: string }[] = [
+    { id: 'Ir ao ar', nome: 'Cobrar de verdade', o: 'Trocar ASAAS_AMBIENTE para producao na Vercel e gerar chaves novas do Asaas.' },
+    { id: 'Domínio', nome: 'Endereço próprio', o: 'Ligar o domínio comprado na Vercel e atualizar os links do site e do Supabase.' },
+    { id: 'Ideia', nome: 'Lembretes no celular', o: 'Notificações de água e refeições (push no Android e no iPhone instalado).' },
+    { id: 'Ideia', nome: 'Profissionais pagos', o: 'Plano para nutricionistas com mais pacientes, prescrição de cardápio e relatórios em PDF.' },
   ]
   return (
     <>
-      <Cabecalho titulo="Próximos módulos" texto="O que falta do projeto original de 14 módulos do painel e das telas do app." />
+      <Cabecalho titulo="Próximos passos" texto="Todos os módulos do projeto original estão funcionando. Sugestões para a próxima fase." />
       <div className="kpis">{itens.map(i => <div key={i.id} className="kpi stack" style={{ gap: 6 }}><span className="tag gray" style={{ width: 'fit-content' }}>{i.id}</span><b>{i.nome}</b><small>{i.o}</small></div>)}</div>
-      <div className="card row"><ListChecks /><p className="small">Já funcionando: A01 Painel, A02 Usuários, A03 Alimentos, A04 Receitas, A05 Cardápios (com simulação por perfil), A06 Conteúdo do mascote, A08 Suporte, A07 Assinaturas, A09 Privacidade, A10 IA, A13 Saúde do sistema, A11 Gamificação, A14 Equipe e segurança e a Conversa com o Papa (T34).</p></div>
+      <div className="card row"><ListChecks /><p className="small">Já funcionando: A01 Painel, A02 Usuários, A03 Alimentos, A04 Receitas, A05 Cardápios (com simulação por perfil), A06 Conteúdo do mascote, A08 Suporte, A07 Assinaturas, A09 Privacidade, A10 IA, A13 Saúde do sistema, A11 Gamificação, A12 Profissionais, A14 Equipe e segurança e a Conversa com o Papa (T34).</p></div>
     </>
   )
 }
