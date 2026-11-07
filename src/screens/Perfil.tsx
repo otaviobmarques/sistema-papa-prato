@@ -1,5 +1,6 @@
 import { useState } from 'react'
-import { Download, LayoutDashboard, Trash2 } from 'lucide-react'
+import { Download, LayoutDashboard, LifeBuoy, PlayCircle, Trash2 } from 'lucide-react'
+import { Suporte } from './Suporte'
 import { Folha, fmt } from '../components/ui'
 import { CartaoConta } from '../components/Conta'
 import { CartaoInstalar } from '../components/Instalar'
@@ -23,6 +24,7 @@ export function Perfil() {
   const ajustes = useEstado(e => e.ajustes)
   const consent = useEstado(e => e.consentimento)
   const [confirmar, setConfirmar] = useState(false)
+  const [suporte, setSuporte] = useState(false)
   const metas = calcularMetas(perfil)
   const set = (m: Partial<TPerfil>) => atualizar(e => ({ ...e, perfil: { ...e.perfil!, ...m } }))
   const setAj = (m: Partial<typeof ajustes>) => atualizar(e => ({ ...e, ajustes: { ...e.ajustes, ...m } }))
@@ -41,6 +43,11 @@ export function Perfil() {
 
       <CartaoConta />
       <CartaoInstalar />
+      <div className="row" style={{ gap: 10 }}>
+        <button className="btn ghost grow" onClick={() => setSuporte(true)}><LifeBuoy size={18} /> Ajuda e suporte</button>
+        <button className="btn ghost grow" onClick={() => atualizar(e => ({ ...e, tourVisto: false }))}><PlayCircle size={18} /> Ver o tour</button>
+      </div>
+      <Suporte aberta={suporte} onFechar={() => setSuporte(false)} />
 
       <div className="card stack">
         <h3>Suas metas</h3>

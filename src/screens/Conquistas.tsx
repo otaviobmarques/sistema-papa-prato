@@ -1,4 +1,6 @@
-import { Flame } from 'lucide-react'
+import { Flame, Share2 } from 'lucide-react'
+import { compartilharCartao } from '../lib/cartao'
+import { avisar } from '../components/ui'
 import { Mascot } from '../components/Mascot'
 import { CONQUISTAS, sequencia } from '../lib/conquistas'
 import { obterEstado, useEstado } from '../lib/store'
@@ -29,6 +31,7 @@ export function Conquistas() {
               <span className="tiny">{c.criterio}</span>
               {!ok && b > 1 && <div className="bar" style={{ width: '80%' }}><span style={{ width: `${(a / b) * 100}%`, background: 'var(--green)' }} /></div>}
               {!ok && b > 1 && <span className="tiny num">{a}/{b}</span>}
+              {ok && <button className="link small row" style={{ gap: 4 }} onClick={async () => { const r = await compartilharCartao(c, seq); if (r === 'baixado') avisar('Imagem da conquista salva!') }}><Share2 size={14} /> Compartilhar</button>}
             </div>
           )
         })}

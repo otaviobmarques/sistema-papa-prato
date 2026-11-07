@@ -1,8 +1,9 @@
 import { useEffect, useMemo, useState } from 'react'
-import { ArrowLeft, Database, LogOut, LayoutDashboard, ListChecks, MessageCircle, Plus, Rocket, Trash2, UtensilsCrossed } from 'lucide-react'
+import { Activity, ArrowLeft, Bot, Database, LifeBuoy, LogOut, Shield, UserCog, Users, LayoutDashboard, ListChecks, MessageCircle, Plus, Rocket, Trash2, UtensilsCrossed } from 'lucide-react'
 import { Folha, avisar, Avisos, fmt, useAlimentos } from '../components/ui'
 import { FormularioLink } from '../components/Conta'
 import { Assinatura } from '../components/Assinatura'
+import { Equipe, IA, PainelServidor, Privacidade, Saude, SuporteEquipe, Usuarios } from './Modulos'
 import { carregarAlimentosEquipe, excluirAlimentoEquipe, publicarConteudo, salvarAlimentoEquipe, usePapel } from '../lib/equipe'
 import { supabase, traduzirErro, useSessao } from '../lib/supabase'
 import { Mascot } from '../components/Mascot'
@@ -12,12 +13,18 @@ import { buscar, NOME_FONTE, nutrientesDe, somar, type Fonte } from '../lib/alim
 import { CONQUISTAS, desbloqueadas } from '../lib/conquistas'
 import { DICAS_PADRAO, atualizar, obterEstado, uid, useEstado, type AlimentoPersonalizado } from '../lib/store'
 
-type Aba = 'painel' | 'alimentos' | 'cardapios' | 'conteudo' | 'roadmap'
-const ABAS: { id: Aba; nome: string; icone: typeof Database }[] = [
+type Aba = 'painel' | 'usuarios' | 'suporte' | 'alimentos' | 'cardapios' | 'conteudo' | 'ia' | 'privacidade' | 'saude' | 'equipe' | 'roadmap'
+const ABAS: { id: Aba; nome: string; icone: typeof Database; servidor?: boolean }[] = [
   { id: 'painel', nome: 'Painel', icone: LayoutDashboard },
+  { id: 'usuarios', nome: 'Usuários', icone: Users, servidor: true },
+  { id: 'suporte', nome: 'Suporte', icone: LifeBuoy, servidor: true },
   { id: 'alimentos', nome: 'Alimentos', icone: Database },
   { id: 'cardapios', nome: 'Cardápios e receitas', icone: UtensilsCrossed },
   { id: 'conteudo', nome: 'Conteúdo do mascote', icone: MessageCircle },
+  { id: 'ia', nome: 'Inteligência artificial', icone: Bot, servidor: true },
+  { id: 'privacidade', nome: 'Privacidade', icone: Shield, servidor: true },
+  { id: 'saude', nome: 'Saúde do sistema', icone: Activity, servidor: true },
+  { id: 'equipe', nome: 'Equipe e segurança', icone: UserCog, servidor: true },
   { id: 'roadmap', nome: 'Próximos módulos', icone: Rocket },
 ]
 
@@ -95,7 +102,7 @@ function PainelAdmin({ modo }: { modo: 'local' | 'servidor' }) {
         <div className="row"><Mascot size={44} animado={false} /><div className="marca">Papa <b>Prato</b></div></div>
         <p className="tiny" style={{ color: '#B9D9C8', marginTop: 6 }}>Painel administrativo</p>
         <nav>
-          {ABAS.map(a => <button key={a.id} aria-current={aba === a.id ? 'page' : undefined} onClick={() => setAba(a.id)}><a.icone size={17} /> {a.nome}</button>)}
+          {ABAS.filter(a => !a.servidor || modo === 'servidor').map(a => <button key={a.id} aria-current={aba === a.id ? 'page' : undefined} onClick={() => setAba(a.id)}><a.icone size={17} /> {a.nome}</button>)}
           <button onClick={() => { location.hash = '' }}><ArrowLeft size={17} /> Voltar ao app</button>
           {modo === 'servidor' && <button onClick={() => supabase!.auth.signOut()}><LogOut size={17} /> Sair</button>}
         </nav>
@@ -103,7 +110,13 @@ function PainelAdmin({ modo }: { modo: 'local' | 'servidor' }) {
         <p className="tiny" style={{ color: '#B9D9C8', marginTop: 18 }}>{modo === 'servidor' ? 'Alterações salvas no servidor e publicadas para todos.' : 'Modo local: alterações valem só neste aparelho.'}</p>
       </aside>
       <main className="stack" style={{ gap: 20 }}>
-        {aba === 'painel' && <Painel />}
+        {aba === 'painel' && (modo === 'servidor' ? <PainelServidor /> : <Painel />)}
+        {aba === 'usuarios' && <Usuarios />}
+        {aba === 'suporte' && <SuporteEquipe />}
+        {aba === 'ia' && <IA />}
+        {aba === 'privacidade' && <Privacidade />}
+        {aba === 'saude' && <Saude />}
+        {aba === 'equipe' && <Equipe />}
         {aba === 'alimentos' && <Alimentos />}
         {aba === 'cardapios' && <Cardapios />}
         {aba === 'conteudo' && <Conteudo />}
@@ -303,21 +316,18 @@ function Conteudo() {
 
 function Roadmap() {
   const itens = [
-    { id: 'A02', nome: 'Usuários', o: 'Busca pseudonimizada, status, acesso de suporte com justificativa, sem acesso irrestrito a dados de saúde.' },
-    { id: 'A07', nome: 'Assinaturas', o: 'Planos, webhooks das lojas (Apple/Google) e do gateway, reconciliação, cupons e reembolsos.' },
-    { id: 'A08', nome: 'Suporte', o: 'Tickets, SLA e acesso temporário auditado.' },
-    { id: 'A09', nome: 'Privacidade (LGPD)', o: 'Consentimentos, pedidos de exportação e exclusão, retenção e auditoria. O app já tem exportar e apagar local.' },
-    { id: 'A10', nome: 'IA', o: 'Foto do prato, conversa com o Papa, versões de prompt, limites, custos e fallback. Só com consentimento.' },
-    { id: 'A11', nome: 'Gamificação', o: 'Regras de conquistas e campanhas editáveis, com prevenção de fraude.' },
-    { id: 'A12', nome: 'Profissionais', o: 'Nutricionistas com CRN verificado acompanhando pacientes.' },
-    { id: 'A13', nome: 'Observabilidade', o: 'Disponibilidade, latência, erros e alertas.' },
-    { id: 'A14', nome: 'Configuração', o: 'Papéis (RBAC), MFA, integrações, backups e restauração.' },
+    { id: 'A04', nome: 'Receitas editáveis', o: 'Criar e editar receitas no painel, com aprovação e histórico. Hoje elas ficam no código.' },
+    { id: 'A05', nome: 'Cardápios editáveis', o: 'Criar modelos de refeição no painel e testar como ficam para cada perfil.' },
+    { id: 'A07', nome: 'Assinaturas', o: 'Planos pagos (Plus), pagamento, cupons e reembolsos. Precisa definir preços e o meio de pagamento.' },
+    { id: 'A11', nome: 'Gamificação', o: 'Criar conquistas e campanhas pelo painel, com regras contra fraude.' },
+    { id: 'A12', nome: 'Profissionais', o: 'Nutricionistas com CRN verificado acompanhando pacientes. Precisa de decisão de negócio.' },
+    { id: 'T34', nome: 'Conversa com o Papa', o: 'Chat com a IA sobre alimentação, com histórico que a pessoa pode apagar. Candidato ao Plus.' },
   ]
   return (
     <>
-      <Cabecalho titulo="Próximos módulos" texto="Do projeto original de 14 módulos, estes dependem de servidor, contas e autenticação. Ficam para a fase 2." />
+      <Cabecalho titulo="Próximos módulos" texto="O que falta do projeto original de 14 módulos do painel e das telas do app." />
       <div className="kpis">{itens.map(i => <div key={i.id} className="kpi stack" style={{ gap: 6 }}><span className="tag gray" style={{ width: 'fit-content' }}>{i.id}</span><b>{i.nome}</b><small>{i.o}</small></div>)}</div>
-      <div className="card row"><ListChecks /><p className="small">Já funcionando: A01 Painel, A03 Alimentos (no servidor), A05 Cardápios (verificação), A06 Conteúdo do mascote (no servidor), A09 Privacidade (consentimentos registrados e exclusão de conta), A10 IA (foto do prato), A14 papéis de equipe.</p></div>
+      <div className="card row"><ListChecks /><p className="small">Já funcionando: A01 Painel, A02 Usuários, A03 Alimentos, A05 Cardápios (verificação), A06 Conteúdo do mascote, A08 Suporte, A09 Privacidade, A10 IA, A13 Saúde do sistema e A14 Equipe e segurança.</p></div>
     </>
   )
 }

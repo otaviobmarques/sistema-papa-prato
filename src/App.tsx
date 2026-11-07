@@ -3,6 +3,12 @@ import { BookOpen, CalendarDays, Home, Plus, Trophy, User } from 'lucide-react'
 import { Admin } from './admin/Admin'
 import { Avisos, Confete } from './components/ui'
 import { Mascot } from './components/Mascot'
+import { Tour } from './components/Tour'
+import { AvisoConexao } from './components/Conexao'
+import { compartilharCartao } from './lib/cartao'
+import { sequencia } from './lib/conquistas'
+import { Share2 } from 'lucide-react'
+import { avisar } from './components/ui'
 import { CONQUISTAS, desbloqueadas } from './lib/conquistas'
 import { atualizar, hoje, obterEstado, useEstado, type Refeicao } from './lib/store'
 import { carregarAlimentos } from './lib/alimentos'
@@ -89,6 +95,7 @@ function AppPrincipal() {
         <button className="icon-btn" onClick={() => ir('perfil')} aria-label="Perfil"><User size={20} /></button>
       </header>
 
+      <AvisoConexao />
       {aba === 'inicio' && <Inicio irPara={ir} adicionar={adicionar} />}
       {aba === 'diario' && <Diario data={data} setData={setData} adicionar={adicionar} />}
       {aba === 'plano' && <Plano />}
@@ -105,6 +112,7 @@ function AppPrincipal() {
 
       <AdicionarAlimento aberta={add.aberta} refeicaoInicial={add.refeicao} modoInicial={add.modo} data={aba === 'diario' ? data : hoje()} onFechar={() => setAdd({ aberta: false })} />
       <Avisos />
+      {!estado.tourVisto && !conq && <Tour onFim={() => scrollTo({ top: 0 })} />}
 
       {conq && (
         <div className="festa" role="dialog" aria-label="Nova conquista" onClick={() => setFesta(null)}>
@@ -114,6 +122,7 @@ function AppPrincipal() {
             <span style={{ fontSize: '3rem' }}>{conq.emoji}</span>
             <h1>Você conseguiu!</h1>
             <p className="muted">Nova conquista: <b>{conq.nome}</b><br />{conq.criterio}.</p>
+            <button className="btn ghost block" onClick={async e => { e.stopPropagation(); const r = await compartilharCartao(conq, sequencia(obterEstado())); if (r === 'baixado') avisar('Imagem da conquista salva!') }}><Share2 size={18} /> Compartilhar conquista</button>
             <button className="btn block" onClick={() => setFesta(null)}>Continuar</button>
           </div>
         </div>

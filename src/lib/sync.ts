@@ -18,6 +18,14 @@ let rodando = false
 const docPerfil = (e: Estado) => Object.fromEntries(CAMPOS_SINCRONIZADOS.map(c => [c, e[c]]))
 const novo = (a?: string, b?: string) => (a ?? '') > (b ?? '')
 
+// Quantas mudanças locais ainda não foram para a nuvem (perfil conta como 1).
+export function pendentes() {
+  const e = obterEstado()
+  let n = e.perfil && e.atualizadoEm && novo(e.atualizadoEm, enviados.perfil) ? 1 : 0
+  for (const [k, d] of Object.entries(e.dias)) if (d.atualizadoEm && novo(d.atualizadoEm, enviados.dias.get(k))) n++
+  return n
+}
+
 export async function sincronizar() {
   const sessao = obterSessao()
   if (!supabase || !sessao || rodando) return

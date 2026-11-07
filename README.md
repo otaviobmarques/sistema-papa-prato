@@ -125,6 +125,16 @@ No Supabase, em Authentication → URL Configuration: Site URL `https://papa-pra
 
 O esquema do banco está em `supabase/migrations/`.
 
+## Módulos de suporte, IA e equipe
+
+**App:** tour de primeiro uso (revisto em Perfil), cartão de conquista para compartilhar (sem peso nem calorias),
+aviso de sem conexão com o que falta sincronizar, "Sair dos outros aparelhos" e Ajuda e suporte com chamados.
+
+**Painel** (só equipe, por funções do banco que não devolvem diário nem dados de saúde):
+Painel com números do servidor (A01), Usuários com e-mail mascarado (A02), Suporte (A08), Privacidade/LGPD (A09),
+Inteligência artificial com uso, erros, tempo e custo estimado (A10), Saúde do sistema (A13) e Equipe e segurança,
+com convites e troca de senha (A14). A função da foto grava cada chamada em `ia_uso` (sem foto nem conteúdo).
+
 ## Próximos passos
 
 1. E-mail próprio para os links de acesso (SMTP, ex.: Resend) e domínio definitivo.

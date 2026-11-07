@@ -198,7 +198,7 @@ textarea.input { min-height: 90px; resize: vertical; }
 .adm aside nav { display: grid; gap: 3px; margin-top: 22px; }
 .adm aside nav button { border: 0; background: none; color: #CFE7DA; text-align: left; padding: 10px 12px; border-radius: 10px; font-size: .9rem; display: flex; gap: 10px; align-items: center; }
 .adm aside nav button[aria-current="page"], .adm aside nav button:hover { background: #22663F; color: #fff; }
-.adm main { padding: 28px; max-width: 1200px; width: 100%; }
+.adm main { padding: 28px; max-width: 1200px; width: 100%; align-content: start; }
 .kpis { display: grid; grid-template-columns: repeat(auto-fit, minmax(170px, 1fr)); gap: 12px; }
 .kpi { background: var(--surface); border-radius: 16px; padding: 16px; box-shadow: var(--shadow); }
 .kpi small { color: var(--ink-2); display: block; }
