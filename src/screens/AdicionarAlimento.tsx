@@ -17,13 +17,13 @@ export function refeicaoAgora(): Refeicao {
   return h < 10 ? 'cafe' : h < 15 ? 'almoco' : h < 18 ? 'lanche' : h < 22 ? 'jantar' : 'ceia'
 }
 
-export function AdicionarAlimento({ aberta, onFechar, data, refeicaoInicial }: { aberta: boolean; onFechar: () => void; data: string; refeicaoInicial?: Refeicao }) {
+export function AdicionarAlimento({ aberta, onFechar, data, refeicaoInicial, modoInicial }: { aberta: boolean; onFechar: () => void; data: string; refeicaoInicial?: Refeicao; modoInicial?: 'foto' }) {
   const base = useAlimentos()
   const [q, setQ] = useState('')
   const [sel, setSel] = useState<Alimento | null>(null)
   const [modo, setModo] = useState<'busca' | 'codigo' | 'foto'>('busca')
   const ref = useRef<HTMLInputElement>(null)
-  useEffect(() => { if (aberta) { setQ(''); setSel(null); setModo('busca'); setTimeout(() => ref.current?.focus(), 250) } }, [aberta])
+  useEffect(() => { if (aberta) { setQ(''); setSel(null); setModo(modoInicial ?? 'busca'); if (!modoInicial) setTimeout(() => ref.current?.focus(), 250) } }, [aberta])
 
   const dias = useEstado(e => e.dias)
   const recentes = useMemo(() => {

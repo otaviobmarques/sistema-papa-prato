@@ -51,6 +51,19 @@ Com o servidor ligado, ele pede login de alguém da equipe.
 Links antigos para a raiz com `#admin` ou retorno de login são enviados para `/app/`.
 Créditos: sistema da Domma Tecnologia; site desenvolvido pela Agência RedBox.
 
+## Ícones, favicon, banner e PWA
+
+Gerados por `node scripts/gerar-icones.cjs` (Playwright) a partir do desenho do Papa em `index.html`:
+
+- `public/favicon.ico` (16/32/48), `public/favicon.svg`, `public/icons/favicon-*.png`
+- `public/icons/icon-192.png`, `icon-512.png` (comuns) e `icon-maskable-*.png` (Android, zona segura)
+- `public/apple-touch-icon.png` (180) e `public/splash/` (16 telas de abertura de iPhone e iPad)
+- `public/og.png`: banner de link preview, 1200 × 630 (WhatsApp, Instagram, LinkedIn, X)
+
+O manifesto (`public/manifest.webmanifest`) tem atalhos no ícone (Registrar, Foto, Cardápio) e capturas de tela.
+O app mostra "Instalar": no Android abre a instalação do navegador; no iPhone, o passo a passo do Safari.
+**Ao trocar de domínio**, atualize as URLs absolutas de `og:url`, `og:image` e `canonical` em `index.html` e `app/index.html`.
+
 ## Base de alimentos
 
 `public/data/alimentos.json` é gerado a partir do repositório

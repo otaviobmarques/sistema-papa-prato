@@ -54,7 +54,7 @@ export function App() {
 function AppPrincipal() {
   const [aba, setAba] = useState<Aba>('inicio')
   const [data, setData] = useState(hoje())
-  const [add, setAdd] = useState<{ aberta: boolean; refeicao?: Refeicao }>({ aberta: false })
+  const [add, setAdd] = useState<{ aberta: boolean; refeicao?: Refeicao; modo?: 'foto' }>({ aberta: false })
   const estado = useEstado(e => e)
   const [festa, setFesta] = useState<string | null>(null)
 
@@ -68,6 +68,16 @@ function AppPrincipal() {
   }, [estado])
 
   const adicionar = (r?: Refeicao) => setAdd({ aberta: true, refeicao: r })
+
+  // Atalhos do ícone instalado: /app/?acao=registrar, ?acao=foto, ?aba=plano
+  useEffect(() => {
+    const q = new URLSearchParams(location.search)
+    const acao = q.get('acao'), abaQ = q.get('aba')
+    if (acao === 'registrar') setAdd({ aberta: true })
+    if (acao === 'foto') setAdd({ aberta: true, modo: 'foto' })
+    if (abaQ && ['inicio', 'diario', 'plano', 'conquistas', 'perfil'].includes(abaQ)) setAba(abaQ as Aba)
+    if (q.toString()) history.replaceState(null, '', location.pathname + location.hash)
+  }, [])
   const ir = (t: string) => { setAba(t as Aba); scrollTo({ top: 0 }) }
   const conq = CONQUISTAS.find(c => c.id === festa)
   const menos = obterEstado().ajustes.menosAnimacao
@@ -93,7 +103,7 @@ function AppPrincipal() {
         <button aria-current={aba === 'conquistas' ? 'page' : undefined} onClick={() => ir('conquistas')}><Trophy size={22} />Conquistas</button>
       </nav>
 
-      <AdicionarAlimento aberta={add.aberta} refeicaoInicial={add.refeicao} data={aba === 'diario' ? data : hoje()} onFechar={() => setAdd({ aberta: false })} />
+      <AdicionarAlimento aberta={add.aberta} refeicaoInicial={add.refeicao} modoInicial={add.modo} data={aba === 'diario' ? data : hoje()} onFechar={() => setAdd({ aberta: false })} />
       <Avisos />
 
       {conq && (

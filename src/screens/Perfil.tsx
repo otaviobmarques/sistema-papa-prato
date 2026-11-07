@@ -2,6 +2,7 @@ import { useState } from 'react'
 import { Download, LayoutDashboard, Trash2 } from 'lucide-react'
 import { Folha, fmt } from '../components/ui'
 import { CartaoConta } from '../components/Conta'
+import { CartaoInstalar } from '../components/Instalar'
 import { Assinatura } from '../components/Assinatura'
 import { registrarConsentimento } from '../lib/sync'
 import { Mascot } from '../components/Mascot'
@@ -39,6 +40,7 @@ export function Perfil() {
       <div className="row"><Mascot size={70} /><div><h1>{perfil.apelido}</h1><p className="small muted">Desde {new Date(perfil.criadoEm).toLocaleDateString('pt-BR')}</p></div></div>
 
       <CartaoConta />
+      <CartaoInstalar />
 
       <div className="card stack">
         <h3>Suas metas</h3>
