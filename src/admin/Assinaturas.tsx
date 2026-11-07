@@ -7,7 +7,7 @@ import { Cabecalho } from './Modulos'
 
 // A07 Assinaturas: números agregados e os últimos avisos do Asaas. Não mostra CPF, nome nem dados de saúde.
 type Painel = {
-  ativas: number; atrasadas: number; pendentes: number; canceladas: number; receita_mensal: number
+  ativas: number; atrasadas: number; pendentes: number; canceladas: number; profissionais_ativos: number; receita_mensal: number
   por_plano: { id: string; nome: string; ativas: number }[]
   eventos: { evento: string; ambiente: string; recebido_em: string; valor: number | null; status: string | null; processado: boolean }[]
 }
@@ -29,7 +29,8 @@ export function Assinaturas() {
       {d && (
         <>
           <div className="kpis">
-            <div className="kpi"><small>Assinaturas em dia</small><strong>{fmt(d.ativas)}</strong><small>{d.por_plano.map(p => `${p.nome} ${p.ativas}`).join(' · ')}</small></div>
+            <div className="kpi"><small>Pacientes assinantes</small><strong>{fmt(d.ativas)}</strong><small>{d.por_plano.filter(p => (p as { publico?: string }).publico !== 'profissional').map(p => `${p.nome} ${p.ativas}`).join(' · ')}</small></div>
+            <div className="kpi"><small>Nutricionistas assinantes</small><strong>{fmt(d.profissionais_ativos ?? 0)}</strong><small>planos profissionais em dia</small></div>
             <div className="kpi"><small>Receita mensal estimada</small><strong>{reais(Number(d.receita_mensal))}</strong><small>planos longos divididos por mês</small></div>
             <div className="kpi" style={{ boxShadow: d.atrasadas ? 'inset 0 0 0 2px var(--orange)' : undefined }}><small>Pagamento em aberto</small><strong>{fmt(d.atrasadas)}</strong><small>cobrança vencida</small></div>
             <div className="kpi"><small>Aguardando 1º pagamento</small><strong>{fmt(d.pendentes)}</strong><small>{fmt(d.canceladas)} canceladas</small></div>

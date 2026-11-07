@@ -6,6 +6,7 @@ import { Assinatura as CreditoDomma } from '../components/Assinatura'
 import { Avisos, avisar, fmt } from '../components/ui'
 import { supabase, useSessao } from '../lib/supabase'
 import { REFEICOES } from '../lib/store'
+import { assinar, cancelarAssinatura, carregarPlanos, dataCurta, formatarCpf, reais, type PlanoVenda } from '../lib/assinatura'
 
 // A12 Área do profissional (/app/#profissional): nutricionista com CRN verificado pela equipe acompanha
 // os pacientes que digitaram o código dele. O diário só aparece se o paciente autorizou.
@@ -34,7 +35,7 @@ export function AreaProfissional() {
       </div>
       <div className="row" style={{ alignItems: 'flex-start' }}>
         <Mascot size={76} />
-        <div className="balao grow"><b>Área do nutricionista</b><div className="small" style={{ marginTop: 4 }}>Acompanhe seus pacientes pelo Papa Prato. É grátis para profissionais com CRN ativo.</div></div>
+        <div className="balao grow"><b>Área do nutricionista</b><div className="small" style={{ marginTop: 4 }}>Acompanhe seus pacientes pelo Papa Prato. Assinatura para profissionais com CRN ativo.</div></div>
       </div>
 
       {!supabase ? <div className="card small">Contas não configuradas neste ambiente.</div>
@@ -48,7 +49,7 @@ export function AreaProfissional() {
             <p className="small">Recebemos seus dados (<b>{cad.nome}</b>, CRN-{cad.regiao_crn} {cad.crn}/{cad.uf}). Nossa equipe confere o registro no conselho e libera seu acesso, normalmente em até 2 dias úteis.</p>
             <button className="btn ghost sm" onClick={carregar}><RefreshCw size={16} /> Conferir de novo</button>
           </div>
-        ) : <Painel cad={cad} />}
+        ) : <ComAssinatura cad={cad} />}
       <CreditoDomma />
       <Avisos />
     </div>
@@ -81,6 +82,86 @@ function FormCadastro({ anterior, onPronto }: { anterior: Cadastro | null; onPro
       <label className="row small" style={{ gap: 8, alignItems: 'flex-start' }}><input type="checkbox" checked={ok} onChange={e => setOk(e.target.checked)} style={{ marginTop: 3 }} /> Declaro que tenho registro ativo no conselho e que vou usar os dados dos pacientes só para acompanhamento nutricional, com o consentimento deles (LGPD).</label>
       {erro && <p className="small" style={{ color: 'var(--red)' }}>{erro}</p>}
       <button className="btn" disabled={!valido || enviando}>{enviando ? 'Enviando…' : 'Enviar para verificação'}</button>
+    </form>
+  )
+}
+
+type AcessoProf = { liberado: boolean; equipe: boolean; status: string | null; plano_nome: string | null; preco: number | null; meses: number | null; limite_pacientes: number | null; pacientes: number; pago_ate: string | null; link_pagamento: string | null; ambiente: string | null }
+
+// O profissional verificado precisa de assinatura em dia para ver pacientes (não há plano grátis).
+function ComAssinatura({ cad }: { cad: Cadastro }) {
+  const [acesso, setAcesso] = useState<AcessoProf | null>(null)
+  const carregar = () => supabase!.rpc('meu_acesso_prof').then(({ data }) => setAcesso(data as AcessoProf))
+  useEffect(() => {
+    carregar()
+    const f = () => { if (document.visibilityState === 'visible') carregar() }
+    document.addEventListener('visibilitychange', f)
+    return () => document.removeEventListener('visibilitychange', f)
+  }, [])
+  useEffect(() => { if (acesso && !acesso.liberado && acesso.link_pagamento) { const t = setInterval(carregar, 8000); return () => clearInterval(t) } }, [acesso?.liberado, acesso?.link_pagamento])
+  if (!acesso) return <div className="card small muted">Carregando…</div>
+  if (!acesso.liberado) return <PlanosProf acesso={acesso} onMudou={carregar} />
+  return (
+    <>
+      {!acesso.equipe && (
+        <div className="card small row between wrap" style={{ gap: 8 }}>
+          <span><b>Plano {acesso.plano_nome}</b> · {acesso.pacientes}{acesso.limite_pacientes ? ` de ${acesso.limite_pacientes}` : ''} pacientes{acesso.pago_ate ? ` · ${acesso.status === 'cancelada' ? 'acesso até' : 'renova em'} ${dataCurta(acesso.pago_ate)}` : ''}</span>
+          {acesso.status !== 'cancelada' && <button className="link tiny" onClick={async () => {
+            if (!confirm('Cancelar a assinatura? Você mantém o acesso até o fim do período pago.')) return
+            try { await cancelarAssinatura('profissional'); avisar('Assinatura cancelada.'); carregar() } catch (e) { avisar((e as Error).message) }
+          }}>Cancelar assinatura</button>}
+        </div>
+      )}
+      {acesso.link_pagamento && <a className="btn ghost block" href={acesso.link_pagamento} target="_blank" rel="noopener">Pagar cobrança em aberto</a>}
+      <Painel cad={cad} />
+    </>
+  )
+}
+
+function PlanosProf({ acesso, onMudou }: { acesso: AcessoProf; onMudou: () => void }) {
+  const [planos, setPlanos] = useState<PlanoVenda[] | null>(null)
+  const [escolhido, setEscolhido] = useState('')
+  const [nome, setNome] = useState(''), [cpf, setCpf] = useState('')
+  const [enviando, setEnviando] = useState(false), [erro, setErro] = useState('')
+  const [link, setLink] = useState<string | null>(acesso.status !== 'atrasada' ? acesso.link_pagamento : null)
+  useEffect(() => { carregarPlanos('profissional').then(l => { setPlanos(l); setEscolhido((l.find(p => p.destaque) ?? l[0])?.id ?? '') }).catch(e => setErro((e as Error).message)) }, [])
+  const plano = planos?.find(p => p.id === escolhido)
+  const pagar = async (ev: React.FormEvent) => {
+    ev.preventDefault(); setErro(''); setEnviando(true)
+    const janela = window.open('', '_blank')
+    try { const r = await assinar(escolhido, nome, cpf, 'profissional'); setLink(r.link); if (r.link && janela) janela.location.href = r.link; else { janela?.close(); if (r.link) location.href = r.link } onMudou() }
+    catch (e) { janela?.close(); setErro((e as Error).message) }
+    setEnviando(false)
+  }
+  if (acesso.status === 'atrasada' && acesso.link_pagamento) return (
+    <div className="card stack"><h2>Pagamento em aberto</h2><p className="small">Pague a cobrança para voltar a ver seus pacientes. Os vínculos continuam guardados.</p>
+      <a className="btn block" href={acesso.link_pagamento} target="_blank" rel="noopener">Pagar agora</a><button className="btn ghost block" onClick={onMudou}><RefreshCw size={16} /> Já paguei, conferir</button></div>
+  )
+  if (link) return (
+    <div className="card stack"><h2>Falta só o pagamento</h2><p className="small">Pague na página segura do Asaas (Pix, cartão ou boleto). Assim que for confirmado, sua área libera sozinha.</p>
+      <a className="btn block" href={link} target="_blank" rel="noopener">Abrir a página de pagamento</a>
+      <button className="btn ghost block" onClick={onMudou}><RefreshCw size={16} /> Já paguei, conferir</button>
+      <button className="link small" onClick={() => setLink(null)}>Escolher outro plano</button></div>
+  )
+  return (
+    <form className="stack" onSubmit={pagar}>
+      <div className="card small soft">Cadastro verificado. {acesso.status === 'cancelada' ? 'Sua assinatura terminou: assine de novo para voltar a ver seus pacientes.' : 'Escolha um plano para começar a acompanhar seus pacientes.'}</div>
+      {planos?.map(p => (
+        <button type="button" key={p.id} role="radio" aria-checked={escolhido === p.id} onClick={() => setEscolhido(p.id)} className="card"
+          style={{ textAlign: 'left', border: 0, cursor: 'pointer', display: 'grid', gridTemplateColumns: '1fr auto', gap: '2px 10px', boxShadow: escolhido === p.id ? 'inset 0 0 0 2.5px var(--orange)' : 'inset 0 0 0 1.5px var(--line)' }}>
+          <b className="row" style={{ gap: 8 }}>{p.nome}{p.destaque && <span className="tag">mais vantajoso</span>}</b>
+          <b className="num" style={{ textAlign: 'right' }}>{reais(p.preco)}</b>
+          <span className="tiny">{p.descricao}</span>
+          <span className="tiny" style={{ textAlign: 'right' }}>{p.meses === 1 ? 'por mês' : `${reais(p.preco / p.meses)}/mês`}</span>
+        </button>
+      ))}
+      <div className="card stack">
+        <div className="field"><label htmlFor="pp-nome">Nome completo (para a cobrança)</label><input id="pp-nome" className="input" required value={nome} onChange={e => setNome(e.target.value)} /></div>
+        <div className="field"><label htmlFor="pp-cpf">CPF</label><input id="pp-cpf" className="input num" inputMode="numeric" required value={cpf} onChange={e => setCpf(formatarCpf(e.target.value))} placeholder="000.000.000-00" /></div>
+        {erro && <p className="small" style={{ color: 'var(--red)' }}>{erro}</p>}
+        <button className="btn block" disabled={!plano || enviando}>{enviando ? 'Preparando…' : plano ? `Assinar por ${reais(plano.preco)}` : 'Escolha um plano'}</button>
+        <p className="tiny">Pagamento pelo Asaas (Pix, cartão ou boleto), renovação automática, cancele quando quiser.</p>
+      </div>
     </form>
   )
 }
