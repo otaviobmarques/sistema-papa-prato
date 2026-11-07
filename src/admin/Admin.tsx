@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from 'react'
-import { Activity, ArrowLeft, BookOpen, Bot, Database, LifeBuoy, LogOut, Shield, UserCog, Users, LayoutDashboard, ListChecks, BadgeDollarSign, CreditCard, MessageCircle, Plus, Rocket, Trash2, UtensilsCrossed } from 'lucide-react'
+import { Activity, ArrowLeft, BookOpen, Bot, Database, LifeBuoy, LogOut, Shield, UserCog, Users, LayoutDashboard, ListChecks, BadgeDollarSign, CreditCard, Medal, MessageCircle, Plus, Rocket, Trash2, UtensilsCrossed } from 'lucide-react'
 import { Folha, avisar, Avisos, fmt, useAlimentos } from '../components/ui'
 import { FormularioLink } from '../components/Conta'
 import { Assinatura } from '../components/Assinatura'
@@ -7,16 +7,17 @@ import { Equipe, IA, PainelServidor, Privacidade, Saude, SuporteEquipe, Usuarios
 import { EditorCardapios, EditorReceitas } from './Editores'
 import { Planos } from './Planos'
 import { Assinaturas } from './Assinaturas'
+import { Gamificacao } from './Gamificacao'
 import { carregarAlimentosEquipe, excluirAlimentoEquipe, publicarConteudo, salvarAlimentoEquipe, usePapel } from '../lib/equipe'
 import { supabase, traduzirErro, useSessao } from '../lib/supabase'
 import { Mascot } from '../components/Mascot'
 import { MODELOS, RECEITAS } from '../data/cardapio'
 import { alergenosEstimados, ALERGENOS } from '../lib/alergias'
 import { buscar, NOME_FONTE, nutrientesDe, somar, type Fonte } from '../lib/alimentos'
-import { CONQUISTAS, desbloqueadas } from '../lib/conquistas'
+import { desbloqueadas, todasConquistas } from '../lib/conquistas'
 import { DICAS_PADRAO, atualizar, obterEstado, uid, useEstado, type AlimentoPersonalizado } from '../lib/store'
 
-type Aba = 'painel' | 'usuarios' | 'suporte' | 'alimentos' | 'cardapios' | 'receitas' | 'conteudo' | 'assinaturas' | 'planos' | 'ia' | 'privacidade' | 'saude' | 'equipe' | 'roadmap'
+type Aba = 'painel' | 'usuarios' | 'suporte' | 'alimentos' | 'cardapios' | 'receitas' | 'conteudo' | 'gamificacao' | 'assinaturas' | 'planos' | 'ia' | 'privacidade' | 'saude' | 'equipe' | 'roadmap'
 const ABAS: { id: Aba; nome: string; icone: typeof Database; servidor?: boolean }[] = [
   { id: 'painel', nome: 'Painel', icone: LayoutDashboard },
   { id: 'usuarios', nome: 'Usuários', icone: Users, servidor: true },
@@ -25,6 +26,7 @@ const ABAS: { id: Aba; nome: string; icone: typeof Database; servidor?: boolean 
   { id: 'cardapios', nome: 'Cardápios', icone: UtensilsCrossed },
   { id: 'receitas', nome: 'Receitas', icone: BookOpen, servidor: true },
   { id: 'conteudo', nome: 'Conteúdo do mascote', icone: MessageCircle },
+  { id: 'gamificacao', nome: 'Gamificação', icone: Medal, servidor: true },
   { id: 'assinaturas', nome: 'Assinaturas', icone: CreditCard, servidor: true },
   { id: 'planos', nome: 'Planos e preços', icone: BadgeDollarSign, servidor: true },
   { id: 'ia', nome: 'Inteligência artificial', icone: Bot, servidor: true },
@@ -129,6 +131,7 @@ function PainelAdmin({ modo }: { modo: 'local' | 'servidor' }) {
         {aba === 'cardapios' && (modo === 'servidor' ? <EditorCardapios /> : <Cardapios />)}
         {aba === 'receitas' && <EditorReceitas />}
         {aba === 'conteudo' && <Conteudo />}
+        {aba === 'gamificacao' && <Gamificacao />}
         {aba === 'roadmap' && <Roadmap />}
       </main>
       <Avisos />
@@ -158,7 +161,7 @@ function Painel() {
         <div className="kpi"><small>Alimentos na base</small><strong>{base.pronto ? fmt(base.lista.length) : '…'}</strong></div>
         <div className="kpi"><small>Registros no diário</small><strong>{fmt(registros.length)}</strong></div>
         <div className="kpi"><small>Dias com registro</small><strong>{Object.values(e.dias).filter(d => d.registros.length).length}</strong></div>
-        <div className="kpi"><small>Conquistas</small><strong>{desbloqueadas(e).length}/{CONQUISTAS.length}</strong></div>
+        <div className="kpi"><small>Conquistas</small><strong>{desbloqueadas(e).length}/{todasConquistas(e).length}</strong></div>
         <div className="kpi"><small>Alimentos da equipe</small><strong>{e.alimentosPersonalizados.length}</strong></div>
         <div className="kpi"><small>Modelos de refeição</small><strong>{MODELOS.length}</strong></div>
       </div>
@@ -325,14 +328,13 @@ function Conteudo() {
 
 function Roadmap() {
   const itens = [
-    { id: 'A11', nome: 'Gamificação', o: 'Criar conquistas e campanhas pelo painel, com regras contra fraude.' },
     { id: 'A12', nome: 'Profissionais', o: 'Nutricionistas com CRN verificado acompanhando pacientes. Precisa de decisão de negócio.' },
   ]
   return (
     <>
       <Cabecalho titulo="Próximos módulos" texto="O que falta do projeto original de 14 módulos do painel e das telas do app." />
       <div className="kpis">{itens.map(i => <div key={i.id} className="kpi stack" style={{ gap: 6 }}><span className="tag gray" style={{ width: 'fit-content' }}>{i.id}</span><b>{i.nome}</b><small>{i.o}</small></div>)}</div>
-      <div className="card row"><ListChecks /><p className="small">Já funcionando: A01 Painel, A02 Usuários, A03 Alimentos, A04 Receitas, A05 Cardápios (com simulação por perfil), A06 Conteúdo do mascote, A08 Suporte, A07 Assinaturas, A09 Privacidade, A10 IA, A13 Saúde do sistema, A14 Equipe e segurança e a Conversa com o Papa (T34).</p></div>
+      <div className="card row"><ListChecks /><p className="small">Já funcionando: A01 Painel, A02 Usuários, A03 Alimentos, A04 Receitas, A05 Cardápios (com simulação por perfil), A06 Conteúdo do mascote, A08 Suporte, A07 Assinaturas, A09 Privacidade, A10 IA, A13 Saúde do sistema, A11 Gamificação, A14 Equipe e segurança e a Conversa com o Papa (T34).</p></div>
     </>
   )
 }

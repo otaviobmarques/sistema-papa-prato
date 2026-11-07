@@ -10,7 +10,7 @@ import { compartilharCartao } from './lib/cartao'
 import { sequencia } from './lib/conquistas'
 import { Share2 } from 'lucide-react'
 import { avisar } from './components/ui'
-import { CONQUISTAS, desbloqueadas } from './lib/conquistas'
+import { desbloqueadas, todasConquistas } from './lib/conquistas'
 import { atualizar, hoje, obterEstado, useEstado, type Refeicao } from './lib/store'
 import { carregarAlimentos } from './lib/alimentos'
 import { carregarConteudoDaEquipe } from './lib/sync'
@@ -99,7 +99,7 @@ function AppPrincipal() {
     if (q.toString()) history.replaceState(null, '', location.pathname + location.hash)
   }, [])
   const ir = (t: string) => { setAba(t as Aba); scrollTo({ top: 0 }) }
-  const conq = CONQUISTAS.find(c => c.id === festa)
+  const conq = todasConquistas(estado).find(c => c.id === festa)
   const menos = obterEstado().ajustes.menosAnimacao
 
   return (

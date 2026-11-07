@@ -120,11 +120,12 @@ export function iniciarSincronizacao() {
 // Conteúdo publicado pela equipe (alimentos próprios e textos do mascote).
 export async function carregarConteudoDaEquipe() {
   if (!supabase) return
-  const [{ data: alimentos }, { data: conteudo }, { data: modelos }, { data: receitas }] = await Promise.all([
+  const [{ data: alimentos }, { data: conteudo }, { data: modelos }, { data: receitas }, { data: conquistas }] = await Promise.all([
     supabase.from('alimentos_equipe').select('*').eq('publicado', true),
     supabase.from('conteudo').select('dados').eq('id', 'mascote').maybeSingle(),
     supabase.from('modelos_refeicao').select('id, refeicao, nome, itens, regioes, tempo').eq('status', 'publicado').order('id'),
     supabase.from('receitas').select('id, nome, emoji, minutos, porcoes, regiao, itens, extras, passos').eq('status', 'publicado').order('id'),
+    supabase.from('conquistas_equipe').select('id, emoji, nome, criterio, metrica, alvo, termos, inicio, fim, ordem').eq('status', 'publicado').order('ordem'),
   ])
   atualizar(e => ({
     ...e,
@@ -132,6 +133,7 @@ export async function carregarConteudoDaEquipe() {
     ...(conteudo?.dados ? { conteudo: { ...e.conteudo, ...conteudo.dados } } : {}),
     ...(modelos ? { modelosEquipe: modelos.map(m => ({ ...m, regioes: m.regioes?.length ? m.regioes : undefined })) } : {}),
     ...(receitas ? { receitasEquipe: receitas } : {}),
+    ...(conquistas ? { conquistasEquipe: conquistas } : {}),
   }), { marcar: false })
 }
 
