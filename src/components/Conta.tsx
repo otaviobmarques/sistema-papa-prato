@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react'
 import { Cloud, CloudOff, LogOut, Mail, MonitorSmartphone, RefreshCw, Trash2 } from 'lucide-react'
 import { Folha, avisar } from './ui'
-import { enviarLinkDeAcesso, supabase, useSessao } from '../lib/supabase'
+import { enviarLinkDeAcesso, supabase, traduzirErro, useSessao } from '../lib/supabase'
 import { aoMudarSituacao, apagarConta, obterSituacao, sairDaConta, sincronizar } from '../lib/sync'
 import { apagarTudo } from '../lib/store'
 
@@ -11,6 +11,27 @@ export function FormularioLink({ destino = '', textoBotao = 'Enviar link de aces
   const [email, setEmail] = useState('')
   const [estado, setEstado] = useState<'pronto' | 'enviando' | 'enviado'>('pronto')
   const [erro, setErro] = useState('')
+  const [comSenha, setComSenha] = useState(false)
+  const [senha, setSenha] = useState('')
+  // Contas criadas pelo administrador entram com e-mail e senha.
+  const entrarComSenha = async (ev: React.FormEvent) => {
+    ev.preventDefault(); setErro(''); setEstado('enviando')
+    aoEnviar?.()
+    const { error } = await supabase!.auth.signInWithPassword({ email: email.trim().toLowerCase(), password: senha })
+    if (error) setErro(/banned/i.test(error.message) ? 'Esta conta está bloqueada. Fale com o suporte do Papa Prato.' : /invalid login|credentials/i.test(error.message) ? 'E-mail ou senha incorretos.' : traduzirErro(error.message))
+    setEstado('pronto')
+  }
+  if (comSenha) return (
+    <form className="stack" style={{ gap: 10 }} onSubmit={entrarComSenha}>
+      <div className="field"><label htmlFor="email-senha">E-mail</label>
+        <input id="email-senha" className="input" type="email" inputMode="email" autoComplete="email" required value={email} onChange={e => setEmail(e.target.value)} placeholder="voce@exemplo.com" /></div>
+      <div className="field"><label htmlFor="senha-conta">Senha</label>
+        <input id="senha-conta" className="input" type="password" autoComplete="current-password" required value={senha} onChange={e => setSenha(e.target.value)} /></div>
+      {erro && <p className="small" style={{ color: 'var(--red)' }}>{erro}</p>}
+      <button className="btn block" disabled={estado === 'enviando'}>{estado === 'enviando' ? 'Entrando…' : 'Entrar'}</button>
+      <button type="button" className="link small" onClick={() => { setComSenha(false); setErro('') }}>Entrar sem senha, pelo link no e-mail</button>
+    </form>
+  )
   const enviar = async (ev: React.FormEvent) => {
     ev.preventDefault(); setErro(''); setEstado('enviando')
     try { aoEnviar?.(); await enviarLinkDeAcesso(email, destino); setEstado('enviado') }
@@ -30,6 +51,7 @@ export function FormularioLink({ destino = '', textoBotao = 'Enviar link de aces
       {erro && <p className="small" style={{ color: 'var(--red)' }}>{erro}</p>}
       <button className="btn block" disabled={estado === 'enviando'}>{estado === 'enviando' ? 'Enviando…' : textoBotao}</button>
       <p className="tiny">Sem senha: você entra pelo link que chega no e-mail.</p>
+      <button type="button" className="link small" onClick={() => { setComSenha(true); setErro('') }}>Tenho senha: entrar com e-mail e senha</button>
     </form>
   )
 }
