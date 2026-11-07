@@ -5,6 +5,7 @@ import { Folha, fmt } from '../components/ui'
 import { CartaoConta } from '../components/Conta'
 import { MinhaAssinatura } from '../components/MinhaAssinatura'
 import { MeuNutricionista } from '../components/MeuNutricionista'
+import { Lembretes } from '../components/Lembretes'
 import { CartaoInstalar } from '../components/Instalar'
 import { Assinatura } from '../components/Assinatura'
 import { registrarConsentimento } from '../lib/sync'
@@ -46,6 +47,7 @@ export function Perfil() {
       <CartaoConta />
       <MinhaAssinatura />
       <MeuNutricionista />
+      <Lembretes />
       <CartaoInstalar />
       <div className="row" style={{ gap: 10 }}>
         <button className="btn ghost grow" onClick={() => setSuporte(true)}><LifeBuoy size={18} /> Ajuda e suporte</button>
