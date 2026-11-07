@@ -1,9 +1,9 @@
 import { useEffect, useMemo, useState } from 'react'
-import { ArrowLeft, Database, LayoutDashboard, ListChecks, MessageCircle, Plus, Rocket, Trash2, UtensilsCrossed } from 'lucide-react'
+import { ArrowLeft, Database, LogOut, LayoutDashboard, ListChecks, MessageCircle, Plus, Rocket, Trash2, UtensilsCrossed } from 'lucide-react'
 import { Folha, avisar, Avisos, fmt, useAlimentos } from '../components/ui'
 import { FormularioLink } from '../components/Conta'
 import { carregarAlimentosEquipe, excluirAlimentoEquipe, publicarConteudo, salvarAlimentoEquipe, usePapel } from '../lib/equipe'
-import { supabase, useSessao } from '../lib/supabase'
+import { supabase, traduzirErro, useSessao } from '../lib/supabase'
 import { Mascot } from '../components/Mascot'
 import { MODELOS, RECEITAS } from '../data/cardapio'
 import { alergenosEstimados, ALERGENOS } from '../lib/alergias'
@@ -32,17 +32,57 @@ export function Admin() {
       <div className="row"><Mascot size={60} animado={false} /><div className="marca">Papa <b>Prato</b> · equipe</div></div>
       <div className="card stack">
         <h2>Painel administrativo</h2>
-        {!sessao ? (
-          <><p className="muted small">Entre com o e-mail da equipe. Se o seu e-mail estiver convidado, o acesso libera na hora.</p>
-            <FormularioLink textoBotao="Enviar link de acesso" aoEnviar={() => { try { localStorage.setItem('papa-prato:voltar-admin', '1') } catch { /* ok */ } }} /></>
-        ) : (
-          <p className="small">Você entrou como <b>{sessao.user.email}</b>, mas esse e-mail não faz parte da equipe. Peça a um administrador para te convidar.</p>
+        {!sessao ? <LoginEquipe /> : (
+          <>
+            <p className="small">Você entrou como <b>{sessao.user.email}</b>, mas essa conta não faz parte da equipe. Peça a um administrador para te convidar.</p>
+            <button className="btn ghost" onClick={() => supabase!.auth.signOut()}><LogOut size={16} /> Sair e entrar com outra conta</button>
+          </>
         )}
       </div>
       <a className="btn ghost block" href="#" style={{ textDecoration: 'none' }}><ArrowLeft size={18} /> Voltar ao app</a>
     </div>
   )
   return <PainelAdmin modo="servidor" />
+}
+
+// Usuário sem "@" vira a conta interna <usuario>@papaprato.invalid (conta da equipe, sem e-mail real).
+const DOMINIO_INTERNO = 'papaprato.invalid'
+function LoginEquipe() {
+  const [modo, setModo] = useState<'senha' | 'link'>('senha')
+  const [usuario, setUsuario] = useState('')
+  const [senha, setSenha] = useState('')
+  const [erro, setErro] = useState('')
+  const [entrando, setEntrando] = useState(false)
+  const entrar = async (ev: React.FormEvent) => {
+    ev.preventDefault(); setErro(''); setEntrando(true)
+    const u = usuario.trim().toLowerCase()
+    const { error } = await supabase!.auth.signInWithPassword({ email: u.includes('@') ? u : `${u}@${DOMINIO_INTERNO}`, password: senha })
+    if (error) setErro(/invalid login|credentials/i.test(error.message) ? 'Usuário ou senha incorretos.' : traduzirErro(error.message))
+    setEntrando(false)
+  }
+  return (
+    <div className="stack">
+      <div className="segmented">
+        <button aria-pressed={modo === 'senha'} onClick={() => setModo('senha')}>Usuário e senha</button>
+        <button aria-pressed={modo === 'link'} onClick={() => setModo('link')}>Link por e-mail</button>
+      </div>
+      {modo === 'senha' ? (
+        <form className="stack" style={{ gap: 10 }} onSubmit={entrar}>
+          <div className="field"><label htmlFor="adm-usuario">Usuário</label>
+            <input id="adm-usuario" className="input" autoComplete="username" autoCapitalize="none" required value={usuario} onChange={e => setUsuario(e.target.value)} placeholder="admin" /></div>
+          <div className="field"><label htmlFor="adm-senha">Senha</label>
+            <input id="adm-senha" className="input" type="password" autoComplete="current-password" required value={senha} onChange={e => setSenha(e.target.value)} /></div>
+          {erro && <p className="small" style={{ color: 'var(--red)' }}>{erro}</p>}
+          <button className="btn block" disabled={entrando}>{entrando ? 'Entrando…' : 'Entrar'}</button>
+        </form>
+      ) : (
+        <>
+          <p className="muted small">Entre com o e-mail da equipe. Se o seu e-mail estiver convidado, o acesso libera na hora.</p>
+          <FormularioLink textoBotao="Enviar link de acesso" aoEnviar={() => { try { localStorage.setItem('papa-prato:voltar-admin', '1') } catch { /* ok */ } }} />
+        </>
+      )}
+    </div>
+  )
 }
 
 function PainelAdmin({ modo }: { modo: 'local' | 'servidor' }) {
@@ -55,6 +95,7 @@ function PainelAdmin({ modo }: { modo: 'local' | 'servidor' }) {
         <nav>
           {ABAS.map(a => <button key={a.id} aria-current={aba === a.id ? 'page' : undefined} onClick={() => setAba(a.id)}><a.icone size={17} /> {a.nome}</button>)}
           <button onClick={() => { location.hash = '' }}><ArrowLeft size={17} /> Voltar ao app</button>
+          {modo === 'servidor' && <button onClick={() => supabase!.auth.signOut()}><LogOut size={17} /> Sair</button>}
         </nav>
         <p className="tiny" style={{ color: '#B9D9C8', marginTop: 18 }}>{modo === 'servidor' ? 'Alterações salvas no servidor e publicadas para todos.' : 'Modo local: alterações valem só neste aparelho.'}</p>
       </aside>
