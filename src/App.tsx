@@ -13,7 +13,9 @@ import { CONQUISTAS, desbloqueadas } from './lib/conquistas'
 import { atualizar, hoje, obterEstado, useEstado, type Refeicao } from './lib/store'
 import { carregarAlimentos } from './lib/alimentos'
 import { carregarConteudoDaEquipe } from './lib/sync'
-import { useSessao } from './lib/supabase'
+import { supabase, useSessao } from './lib/supabase'
+import { useAcesso } from './lib/assinatura'
+import { Assinar } from './screens/Assinar'
 import { AdicionarAlimento } from './screens/AdicionarAlimento'
 import { Conquistas } from './screens/Conquistas'
 import { Diario } from './screens/Diario'
@@ -54,6 +56,15 @@ export function App() {
   useEffect(() => { carregarAlimentos().catch(() => {}); carregarConteudoDaEquipe().catch(() => {}) }, []) // já começa a baixar a base
   if (hash.startsWith('#admin')) return <Admin />
   if (!perfil) return <Onboarding />
+  return <Portao />
+}
+
+// Sem assinatura em dia, o app mostra a tela de planos. (Sem servidor configurado, ex.: ambiente local, libera.)
+function Portao() {
+  const { carregando, acesso } = useAcesso()
+  if (!supabase) return <AppPrincipal />
+  if (carregando) return <div className="onb" style={{ placeItems: 'center', justifyContent: 'center' }}><Mascot size={110} /></div>
+  if (!acesso?.liberado) return <Assinar acesso={acesso} />
   return <AppPrincipal />
 }
 

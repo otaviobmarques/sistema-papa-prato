@@ -108,6 +108,16 @@ async function usuarioDoToken(token: string): Promise<string | null> {
   return typeof u?.id === 'string' ? u.id : null
 }
 
+// Assinatura em dia (ou equipe): quem decide é o banco, pela função meu_acesso.
+async function temAcesso(token: string): Promise<boolean> {
+  const url = process.env.SUPABASE_URL, chave = process.env.SUPABASE_PUBLISHABLE_KEY
+  if (!url || !chave) return false
+  const r = await fetch(`${url}/rest/v1/rpc/meu_acesso`, { method: 'POST', headers: { apikey: chave, authorization: `Bearer ${token}`, 'content-type': 'application/json' }, body: '{}' })
+  if (!r.ok) return false
+  const a = await r.json().catch(() => null)
+  return a?.liberado === true
+}
+
 // ---- Vertex AI: troca a conta de serviço por um token de acesso (JWT assinado, sem bibliotecas) ----
 type ContaServico = { client_email: string; private_key: string; project_id: string }
 let tokenVertex: { valor: string; expira: number } | null = null
@@ -158,6 +168,7 @@ export async function POST(req: Request) {
   const token = (req.headers.get('authorization') || '').replace(/^Bearer\s+/i, '')
   const uid = token ? await usuarioDoToken(token) : null
   if (!uid) return json(401, { erro: 'Entre na sua conta para usar a foto do prato.' })
+  if (!(await temAcesso(token))) return json(402, { erro: 'A foto do prato faz parte da assinatura. Assine para continuar.' })
 
   const agora = Date.now()
   const recentes = (usos.get(uid) ?? []).filter(t => agora - t < 3600_000)

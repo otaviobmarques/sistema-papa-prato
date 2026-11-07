@@ -46,11 +46,11 @@ function FormPlano({ inicial, mensal, podeEditar, onSalvo }: { inicial: Plano; m
   const valido = valor > 0 && valor < 10000 && p.nome.trim().length >= 2
   const porMes = valido ? valor / p.meses : 0
   const economia = mensal && p.meses > 1 && valido ? Math.round((1 - porMes / mensal) * 100) : 0
-  const mudou = valor !== inicial.preco || (['nome', 'meses', 'teste_dias', 'descricao', 'destaque', 'ativo'] as const).some(k => p[k] !== inicial[k])
+  const mudou = valor !== inicial.preco || (['nome', 'meses', 'descricao', 'destaque', 'ativo'] as const).some(k => p[k] !== inicial[k])
 
   const salvar = async () => {
     setSalvando(true)
-    const { error } = await supabase!.from('planos').update({ nome: p.nome.trim(), preco: Math.round(valor * 100) / 100, meses: p.meses, teste_dias: p.teste_dias, descricao: p.descricao.trim(), destaque: p.destaque, ativo: p.ativo }).eq('id', p.id)
+    const { error } = await supabase!.from('planos').update({ nome: p.nome.trim(), preco: Math.round(valor * 100) / 100, meses: p.meses, descricao: p.descricao.trim(), destaque: p.destaque, ativo: p.ativo }).eq('id', p.id)
     setSalvando(false)
     avisar(error ? error.message : `Plano ${p.nome} salvo.`)
     if (!error) onSalvo()
@@ -68,7 +68,6 @@ function FormPlano({ inicial, mensal, podeEditar, onSalvo }: { inicial: Plano; m
         <div className="field grow"><label htmlFor={`pl-preco-${p.id}`}>Preço (R$)</label><input id={`pl-preco-${p.id}`} className="input num" inputMode="decimal" value={preco} disabled={dis} onChange={e => setPreco(e.target.value)} aria-invalid={!valido} /></div>
         <div className="field" style={{ width: 120 }}><label htmlFor={`pl-meses-${p.id}`}>Cobrança</label><select id={`pl-meses-${p.id}`} className="input" value={p.meses} disabled={dis} onChange={e => set({ meses: Number(e.target.value) })}>{[1, 3, 6, 12].map(m => <option key={m} value={m}>{m === 1 ? 'Mensal' : m === 3 ? 'Trimestral' : m === 6 ? 'Semestral' : 'Anual'}</option>)}</select></div>
       </div>
-      <div className="field"><label htmlFor={`pl-teste-${p.id}`}>Dias grátis para testar</label><input id={`pl-teste-${p.id}`} className="input num" style={{ width: 100 }} inputMode="numeric" value={p.teste_dias} disabled={dis} onChange={e => set({ teste_dias: Math.min(30, Number(e.target.value.replace(/\D/g, '')) || 0) })} /></div>
       <div className="field"><label htmlFor={`pl-desc-${p.id}`}>Frase curta</label><input id={`pl-desc-${p.id}`} className="input" value={p.descricao} maxLength={140} disabled={dis} onChange={e => set({ descricao: e.target.value })} /></div>
       <label className="row small" style={{ gap: 6 }}><input type="checkbox" checked={p.destaque} disabled={dis} onChange={e => set({ destaque: e.target.checked })} /> Destacar como "mais vantajoso"</label>
       <label className="row small" style={{ gap: 6 }}><input type="checkbox" checked={p.ativo} disabled={dis} onChange={e => set({ ativo: e.target.checked })} /> Mostrar no site e no app</label>
