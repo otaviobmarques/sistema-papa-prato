@@ -327,13 +327,12 @@ function Roadmap() {
   const itens = [
     { id: 'A11', nome: 'Gamificação', o: 'Criar conquistas e campanhas pelo painel, com regras contra fraude.' },
     { id: 'A12', nome: 'Profissionais', o: 'Nutricionistas com CRN verificado acompanhando pacientes. Precisa de decisão de negócio.' },
-    { id: 'T34', nome: 'Conversa com o Papa', o: 'Chat com a IA sobre alimentação, com histórico que a pessoa pode apagar. Candidato ao Plus.' },
   ]
   return (
     <>
       <Cabecalho titulo="Próximos módulos" texto="O que falta do projeto original de 14 módulos do painel e das telas do app." />
       <div className="kpis">{itens.map(i => <div key={i.id} className="kpi stack" style={{ gap: 6 }}><span className="tag gray" style={{ width: 'fit-content' }}>{i.id}</span><b>{i.nome}</b><small>{i.o}</small></div>)}</div>
-      <div className="card row"><ListChecks /><p className="small">Já funcionando: A01 Painel, A02 Usuários, A03 Alimentos, A04 Receitas, A05 Cardápios (com simulação por perfil), A06 Conteúdo do mascote, A08 Suporte, A09 Privacidade, A10 IA, A13 Saúde do sistema e A14 Equipe e segurança.</p></div>
+      <div className="card row"><ListChecks /><p className="small">Já funcionando: A01 Painel, A02 Usuários, A03 Alimentos, A04 Receitas, A05 Cardápios (com simulação por perfil), A06 Conteúdo do mascote, A08 Suporte, A07 Assinaturas, A09 Privacidade, A10 IA, A13 Saúde do sistema, A14 Equipe e segurança e a Conversa com o Papa (T34).</p></div>
     </>
   )
 }

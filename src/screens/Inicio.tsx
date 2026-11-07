@@ -9,7 +9,7 @@ import { planoDoDia } from '../lib/plano'
 import { sequencia } from '../lib/conquistas'
 import { REFEICOES, beberAgua, desfazerAgua, diaVazio, hoje, obterEstado, useEstado, type Refeicao } from '../lib/store'
 
-export function Inicio({ irPara, adicionar }: { irPara: (t: string) => void; adicionar: (r?: Refeicao) => void }) {
+export function Inicio({ irPara, adicionar, conversar }: { irPara: (t: string) => void; adicionar: (r?: Refeicao) => void; conversar?: () => void }) {
   const data = hoje()
   const perfil = useEstado(e => e.perfil)
   const dia = useEstado(e => e.dias[data]) ?? diaVazio()
@@ -47,6 +47,7 @@ export function Inicio({ irPara, adicionar }: { irPara: (t: string) => void; adi
         <div className="grow">
           <h1>{saud}, {perfil?.apelido}!</h1>
           <p className="muted small">{fala}</p>
+          {conversar && <button className="link small" onClick={conversar} style={{ marginTop: 4 }}>💬 Conversar com o Papa</button>}
         </div>
       </div>
 
