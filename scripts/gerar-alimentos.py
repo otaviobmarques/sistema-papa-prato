@@ -11,7 +11,7 @@ raiz = pathlib.Path(sys.argv[1] if len(sys.argv) > 1 else '../fontes-ref')
 dados = json.loads((raiz / 'unificado' / 'alimentos.json').read_text())
 resumo = json.loads((raiz / 'unificado' / 'resumo.json').read_text())
 
-FONTES = ['TACO', 'TBCA', 'POF', 'USDA', 'COFID']
+FONTES = ['TACO', 'TBCA', 'POF', 'USDA', 'COFID', 'CIQUAL', 'CNF', 'AFCD', 'FRIDA', 'FINELI']
 
 def r(v, casas=1):
     return None if v is None else round(float(v), casas)

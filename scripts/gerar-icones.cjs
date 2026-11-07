@@ -69,7 +69,7 @@ async function render(page, w, h, body, arquivo, { transparente = false } = {}) 
     <div style="position:absolute;right:300px;top:330px;width:200px;height:200px;border-radius:50%;background:radial-gradient(circle,#DCF7B5,#BEF264);opacity:.8"></div>
     <div style="position:absolute;left:72px;top:64px;display:flex;align-items:center;gap:14px;font:700 40px/1 Fredoka,sans-serif;color:${VERDE}">${svgPapa('0 0 290 290', 'width="64" height="64"')}Papa <span style="color:${BARRO}">Prato</span></div>
     <div style="position:absolute;left:72px;top:170px;width:620px;font:600 64px/1.04 Fredoka,sans-serif;color:${VERDE};letter-spacing:-1px">Comer bem com <span style="color:${BARRO}">arroz e feijão</span> e zero complicação.</div>
-    <div style="position:absolute;left:72px;top:418px;width:560px;font:500 25px/1.4 Inter,sans-serif;color:#55645B">Cardápio da semana, foto do prato e 18 mil alimentos brasileiros.</div>
+    <div style="position:absolute;left:72px;top:418px;width:560px;font:500 25px/1.4 Inter,sans-serif;color:#55645B">Cardápio da semana, foto do prato e 30 mil alimentos.</div>
     <div style="position:absolute;left:72px;top:512px;display:flex;gap:12px">
       <span style="background:${BARRO};color:#fff;font:600 22px/1 Inter,sans-serif;padding:16px 26px;border-radius:999px">Comece hoje</span>
       <span style="background:#fff;color:${VERDE};font:600 22px/1 Inter,sans-serif;padding:16px 22px;border-radius:999px;box-shadow:inset 0 0 0 2px #F0E1CE">No celular, sem baixar nada</span>

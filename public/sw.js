@@ -1,6 +1,6 @@
 // Service worker do Papa Prato: guarda o app, o site e a base de alimentos para funcionar offline.
 // Estratégia "rede primeiro": sempre tenta a versão nova e usa o que está guardado só sem internet.
-const CACHE = 'papa-prato-v4'
+const CACHE = 'papa-prato-v5'
 const ESSENCIAL = ['/', '/app/', '/data/alimentos.json', '/manifest.webmanifest', '/favicon.svg', '/icons/icon-192.png', '/icons/icon-512.png', '/apple-touch-icon.png']
 self.addEventListener('install', e => { self.skipWaiting(); e.waitUntil(caches.open(CACHE).then(c => c.addAll(ESSENCIAL))) })
 self.addEventListener('activate', e => e.waitUntil(caches.keys().then(ks => Promise.all(ks.filter(k => k !== CACHE).map(k => caches.delete(k)))).then(() => self.clients.claim())))
