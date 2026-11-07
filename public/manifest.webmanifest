@@ -8,28 +8,132 @@
   "start_url": "/app/?origem=pwa",
   "scope": "/",
   "display": "standalone",
-  "display_override": ["standalone", "minimal-ui"],
+  "display_override": [
+    "standalone",
+    "minimal-ui"
+  ],
   "orientation": "portrait",
   "background_color": "#FFF5EC",
   "theme_color": "#FFF5EC",
-  "categories": ["health", "food", "lifestyle"],
+  "categories": [
+    "health",
+    "food",
+    "lifestyle"
+  ],
   "icons": [
-    { "src": "/icons/icon-192.png", "sizes": "192x192", "type": "image/png", "purpose": "any" },
-    { "src": "/icons/icon-512.png", "sizes": "512x512", "type": "image/png", "purpose": "any" },
-    { "src": "/icons/icon-maskable-192.png", "sizes": "192x192", "type": "image/png", "purpose": "maskable" },
-    { "src": "/icons/icon-maskable-512.png", "sizes": "512x512", "type": "image/png", "purpose": "maskable" },
-    { "src": "/favicon.svg", "sizes": "any", "type": "image/svg+xml", "purpose": "any" }
+    {
+      "src": "/icons/icon-192.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "/icons/icon-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "/icons/icon-maskable-192.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "maskable"
+    },
+    {
+      "src": "/icons/icon-maskable-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "maskable"
+    },
+    {
+      "src": "/favicon.svg",
+      "sizes": "any",
+      "type": "image/svg+xml",
+      "purpose": "any"
+    }
   ],
   "shortcuts": [
-    { "name": "Registrar refeição", "short_name": "Registrar", "url": "/app/?acao=registrar", "icons": [{ "src": "/icons/icon-192.png", "sizes": "192x192" }] },
-    { "name": "Foto do prato", "short_name": "Foto", "url": "/app/?acao=foto", "icons": [{ "src": "/icons/icon-192.png", "sizes": "192x192" }] },
-    { "name": "Meu cardápio", "short_name": "Cardápio", "url": "/app/?aba=plano", "icons": [{ "src": "/icons/icon-192.png", "sizes": "192x192" }] }
+    {
+      "name": "Registrar refeição",
+      "short_name": "Registrar",
+      "url": "/app/?acao=registrar",
+      "icons": [
+        {
+          "src": "/icons/icon-192.png",
+          "sizes": "192x192"
+        }
+      ]
+    },
+    {
+      "name": "Foto do prato",
+      "short_name": "Foto",
+      "url": "/app/?acao=foto",
+      "icons": [
+        {
+          "src": "/icons/icon-192.png",
+          "sizes": "192x192"
+        }
+      ]
+    },
+    {
+      "name": "Meu cardápio",
+      "short_name": "Cardápio",
+      "url": "/app/?aba=plano",
+      "icons": [
+        {
+          "src": "/icons/icon-192.png",
+          "sizes": "192x192"
+        }
+      ]
+    },
+    {
+      "name": "Conversar com o Papa",
+      "short_name": "Papa",
+      "url": "/app/?acao=papa",
+      "icons": [
+        {
+          "src": "/icons/icon-192.png",
+          "sizes": "192x192"
+        }
+      ],
+      "description": "Tire dúvidas sobre comida com o Papa"
+    }
   ],
   "screenshots": [
-    { "src": "/site/telas/inicio.webp", "sizes": "780x1328", "type": "image/webp", "form_factor": "narrow", "label": "Início com calorias, macros e água do dia" },
-    { "src": "/site/telas/foto-revisao.webp", "sizes": "780x1328", "type": "image/webp", "form_factor": "narrow", "label": "Foto do prato analisada para você conferir" },
-    { "src": "/site/telas/plano.webp", "sizes": "780x1328", "type": "image/webp", "form_factor": "narrow", "label": "Cardápio da semana ajustado à sua meta" },
-    { "src": "/site/telas/festa.webp", "sizes": "780x1328", "type": "image/webp", "form_factor": "narrow", "label": "Conquistas comemoradas pelo Papa" },
-    { "src": "/site/captura-larga.webp", "sizes": "1440x900", "type": "image/webp", "form_factor": "wide", "label": "Papa Prato no computador" }
+    {
+      "src": "/site/telas/inicio.webp",
+      "sizes": "780x1328",
+      "type": "image/webp",
+      "form_factor": "narrow",
+      "label": "Início com calorias, macros e água do dia"
+    },
+    {
+      "src": "/site/telas/foto-revisao.webp",
+      "sizes": "780x1328",
+      "type": "image/webp",
+      "form_factor": "narrow",
+      "label": "Foto do prato analisada para você conferir"
+    },
+    {
+      "src": "/site/telas/plano.webp",
+      "sizes": "780x1328",
+      "type": "image/webp",
+      "form_factor": "narrow",
+      "label": "Cardápio da semana ajustado à sua meta"
+    },
+    {
+      "src": "/site/telas/festa.webp",
+      "sizes": "780x1328",
+      "type": "image/webp",
+      "form_factor": "narrow",
+      "label": "Conquistas comemoradas pelo Papa"
+    },
+    {
+      "src": "/site/captura-larga.webp",
+      "sizes": "1440x900",
+      "type": "image/webp",
+      "form_factor": "wide",
+      "label": "Papa Prato no computador"
+    }
   ]
 }

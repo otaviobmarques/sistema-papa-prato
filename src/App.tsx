@@ -1,9 +1,10 @@
 import { useEffect, useState } from 'react'
-import { BookOpen, CalendarDays, Home, Plus, Trophy, User } from 'lucide-react'
+import { BookOpen, CalendarDays, Home, MessageCircle, Plus, Trophy, User } from 'lucide-react'
 import { Admin } from './admin/Admin'
 import { Avisos, Confete } from './components/ui'
 import { Mascot } from './components/Mascot'
 import { Tour } from './components/Tour'
+import { ConversaPapa } from './components/ConversaPapa'
 import { AvisoConexao } from './components/Conexao'
 import { compartilharCartao } from './lib/cartao'
 import { sequencia } from './lib/conquistas'
@@ -74,6 +75,7 @@ function AppPrincipal() {
   const [add, setAdd] = useState<{ aberta: boolean; refeicao?: Refeicao; modo?: 'foto' }>({ aberta: false })
   const estado = useEstado(e => e)
   const [festa, setFesta] = useState<string | null>(null)
+  const [papa, setPapa] = useState(false)
 
   // Comemora conquistas novas.
   useEffect(() => {
@@ -92,6 +94,7 @@ function AppPrincipal() {
     const acao = q.get('acao'), abaQ = q.get('aba')
     if (acao === 'registrar') setAdd({ aberta: true })
     if (acao === 'foto') setAdd({ aberta: true, modo: 'foto' })
+    if (acao === 'papa') setPapa(true)
     if (abaQ && ['inicio', 'diario', 'plano', 'conquistas', 'perfil'].includes(abaQ)) setAba(abaQ as Aba)
     if (q.toString()) history.replaceState(null, '', location.pathname + location.hash)
   }, [])
@@ -103,11 +106,14 @@ function AppPrincipal() {
     <div className="app">
       <header className="topo">
         <div className="marca">Papa <b>Prato</b></div>
-        <button className="icon-btn" onClick={() => ir('perfil')} aria-label="Perfil"><User size={20} /></button>
+        <div className="row" style={{ gap: 6 }}>
+          <button className="icon-btn" onClick={() => setPapa(true)} aria-label="Conversar com o Papa"><MessageCircle size={20} /></button>
+          <button className="icon-btn" onClick={() => ir('perfil')} aria-label="Perfil"><User size={20} /></button>
+        </div>
       </header>
 
       <AvisoConexao />
-      {aba === 'inicio' && <Inicio irPara={ir} adicionar={adicionar} />}
+      {aba === 'inicio' && <Inicio irPara={ir} adicionar={adicionar} conversar={() => setPapa(true)} />}
       {aba === 'diario' && <Diario data={data} setData={setData} adicionar={adicionar} />}
       {aba === 'plano' && <Plano />}
       {aba === 'conquistas' && <Conquistas />}
@@ -122,6 +128,7 @@ function AppPrincipal() {
       </nav>
 
       <AdicionarAlimento aberta={add.aberta} refeicaoInicial={add.refeicao} modoInicial={add.modo} data={aba === 'diario' ? data : hoje()} onFechar={() => setAdd({ aberta: false })} />
+      <ConversaPapa aberta={papa} onFechar={() => setPapa(false)} />
       <Avisos />
       {!estado.tourVisto && !conq && <Tour onFim={() => scrollTo({ top: 0 })} />}
 
