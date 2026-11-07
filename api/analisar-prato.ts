@@ -2,10 +2,9 @@
 // estimar as porções. As credenciais existem só aqui no servidor. A foto não é guardada.
 // Os valores nutricionais NÃO vêm da IA: o app liga cada item à base TACO/TBCA e a pessoa revisa.
 //
-// Provedores, na ordem de preferência (usa o primeiro que estiver configurado na Vercel):
-//  1. Claude (Anthropic): ANTHROPIC_API_KEY  (+ CLAUDE_MODEL, padrão claude-opus-5-5)
-//  2. Gemini no Vertex AI (Google Cloud): GOOGLE_SERVICE_ACCOUNT_JSON (+ GOOGLE_CLOUD_LOCATION)
-//  3. Gemini API (AI Studio): GEMINI_API_KEY
+// Provedores (configurados na Vercel):
+//  1. Claude (Anthropic), principal: ANTHROPIC_API_KEY  (+ CLAUDE_MODEL, padrão claude-opus-5-5)
+//  2. Gemini, reserva se o Claude falhar: GOOGLE_SERVICE_ACCOUNT_JSON (Vertex AI) ou GEMINI_API_KEY (AI Studio)
 import { createSign } from 'node:crypto'
 import Anthropic from '@anthropic-ai/sdk'
 import { zodOutputFormat } from '@anthropic-ai/sdk/helpers/zod'
@@ -155,39 +154,41 @@ export async function POST(req: Request) {
   const tipo = corpo.tipo ?? 'image/jpeg'
   if (!/^image\/(jpeg|png|webp)$/.test(tipo) || !imagem || imagem.length > 3_000_000) return json(400, { erro: 'Imagem inválida ou grande demais.' })
 
+  // 1º Claude; se falhar (fora do ar, limite, recusa), tenta o Gemini antes de devolver erro.
+  const temGemini = !!(process.env.GOOGLE_SERVICE_ACCOUNT_JSON || process.env.GEMINI_API_KEY)
   if (process.env.ANTHROPIC_API_KEY) {
     try {
       return json(200, { ...limpar(await analisarComClaude(imagem, tipo)), modelo: MODELO_CLAUDE })
     } catch (e) {
-      if (e instanceof Anthropic.RateLimitError) return json(429, { erro: 'Muita gente analisando fotos agora. Tente de novo em instantes.' })
       if (e instanceof Anthropic.AuthenticationError) console.error('Claude: chave inválida')
       else if (e instanceof Anthropic.APIError) console.error('Claude', e.status, e.message)
       else console.error('Claude', (e as Error).message)
-      return json(502, { erro: 'A análise não funcionou agora. Tente de novo ou registre pela busca.' })
+      if (!temGemini) {
+        if (e instanceof Anthropic.RateLimitError) return json(429, { erro: 'Muita gente analisando fotos agora. Tente de novo em instantes.' })
+        return json(502, { erro: 'A análise não funcionou agora. Tente de novo ou registre pela busca.' })
+      }
+      console.warn('Usando o Gemini como reserva')
     }
   }
 
-  let r: Response | null
   try {
-    r = await chamarGemini({
-      contents: [{ role: 'user', parts: [{ text: PROMPT }, { inlineData: { mimeType: tipo, data: imagem } }] }],
-      generationConfig: { temperature: 0.2, responseMimeType: 'application/json', responseSchema: ESQUEMA },
-    })
+    return json(200, { ...limpar(await analisarComGemini(imagem, tipo)), modelo: MODELO })
   } catch (e) {
-    console.error('Gemini (credenciais)', (e as Error).message)
+    console.error('Gemini', (e as Error).message)
     return json(502, { erro: 'A análise não funcionou agora. Tente de novo ou registre pela busca.' })
   }
-  if (!r || !r.ok) {
-    console.error('Gemini', r?.status, r ? (await r.text()).slice(0, 500) : 'sem credenciais')
-    return json(502, { erro: 'A análise não funcionou agora. Tente de novo ou registre pela busca.' })
-  }
+}
+
+async function analisarComGemini(imagem: string, tipo: string): Promise<TResultado> {
+  const r = await chamarGemini({
+    contents: [{ role: 'user', parts: [{ text: PROMPT }, { inlineData: { mimeType: tipo, data: imagem } }] }],
+    generationConfig: { temperature: 0.2, responseMimeType: 'application/json', responseSchema: ESQUEMA },
+  })
+  if (!r) throw new Error('sem credenciais')
+  if (!r.ok) throw new Error(`HTTP ${r.status}: ${(await r.text()).slice(0, 300)}`)
   const dados = await r.json()
   const texto = dados?.candidates?.[0]?.content?.parts?.map((p: { text?: string }) => p.text ?? '').join('') ?? ''
-  try {
-    return json(200, { ...limpar(JSON.parse(texto)), modelo: MODELO })
-  } catch {
-    return json(502, { erro: 'Não entendi a resposta da análise. Tente outra foto.' })
-  }
+  return Resultado.parse(JSON.parse(texto))
 }
 
 // Normaliza e limita o que volta da IA antes de entregar ao app.
